@@ -6,7 +6,10 @@ public static class PersonalAssistantProbe
     public static void Run()
     {
         string root=Path.Combine(Path.GetTempPath(),"IslandPersonalQA-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(root);
-        var now=new DateTimeOffset(2026,10,4,12,0,0,TimeSpan.FromHours(8));
+        // ReminderTime interprets wall-clock dates in the user's Windows timezone.
+        // Use that same timezone for the injected clock, including UTC CI runners.
+        var wallClock=new DateTime(2026,10,4,12,0,0,DateTimeKind.Unspecified);
+        var now=new DateTimeOffset(wallClock,TimeZoneInfo.Local.GetUtcOffset(wallClock));
         int passed=0;void Check(bool v,string name){if(!v)throw new Exception("FAIL: "+name);passed++;Console.WriteLine("PASS: "+name);}
         foreach(var test in new[]{("明天上午九點提醒我開會",new DateTimeOffset(2026,10,5,9,0,0,now.Offset)),("明天下午三點半提醒我買牛奶",new DateTimeOffset(2026,10,5,15,30,0,now.Offset)),("提醒我後天晚上八點喝水",new DateTimeOffset(2026,10,6,20,0,0,now.Offset)),("30 分鐘後提醒我喝水",now.AddMinutes(30)),("兩小時後提醒我休息",now.AddHours(2)),("今天18:40提醒我整理桌面",new DateTimeOffset(2026,10,4,18,40,0,now.Offset)),("2026/10/10 14:10提醒我領包裹",new DateTimeOffset(2026,10,10,14,10,0,now.Offset)),("下週一上午九點提醒我整理",new DateTimeOffset(2026,10,5,9,0,0,now.Offset)),("明天中午十二點提醒我吃飯",new DateTimeOffset(2026,10,5,12,0,0,now.Offset)),("10秒後提醒我測試",now.AddSeconds(10))})
             Check(ReminderTime.Parse(test.Item1,now)?.Due==test.Item2,"natural Chinese time: "+test.Item1);
