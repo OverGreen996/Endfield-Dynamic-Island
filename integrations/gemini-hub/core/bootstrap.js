@@ -55,7 +55,8 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).hr
   if(action==='init')console.log(JSON.stringify(initialize(root)));
   else if(action==='confirm'){
    let input='';for await(const chunk of process.stdin){input+=chunk;if(input.length>2000)throw Error('input_too_large');}
-   console.log(JSON.stringify(confirmedPolicy(JSON.parse(readFileSync(resolve(root,'policy.json'),'utf8')),JSON.parse(input)),null,2));
+   // Windows PowerShell can prefix redirected UTF-8 stdin with a BOM.
+   console.log(JSON.stringify(confirmedPolicy(JSON.parse(readFileSync(resolve(root,'policy.json'),'utf8')),JSON.parse(input.trim())),null,2));
   }else throw Error('unknown_action');
- }catch{console.error('local_setup_failed');process.exitCode=2;}
+ }catch(error){console.error('local_setup_failed:'+process.argv[2]+':'+(error instanceof SyntaxError?'invalid_json':'validation_or_storage'));process.exitCode=2;}
 }

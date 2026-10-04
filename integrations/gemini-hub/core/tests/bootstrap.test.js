@@ -3,9 +3,20 @@ import assert from 'node:assert/strict';
 import {mkdtempSync,readFileSync,writeFileSync,rmSync,unlinkSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {initialize,initialPolicy,confirmedPolicy} from '../bootstrap.js';
 import {UsageGuard,validatePolicy,freePolicyFingerprint} from '../guard.js';
 const binding={keyHash:'a'.repeat(64),keySuffix:'mock',freeConfirmed:true};
+test('confirmation accepts BOM-prefixed Windows PowerShell JSON without changing key binding',()=>{
+ const root=mkdtempSync(join(tmpdir(),'gemini-bootstrap-'));
+ try{
+  initialize(root);
+  const result=spawnSync(process.execPath,[fileURLToPath(new URL('../bootstrap.js',import.meta.url)),'confirm',root],{input:'\ufeff'+JSON.stringify(binding)+'\r\n',encoding:'utf8'});
+  assert.equal(result.status,0,result.stderr);
+  assert.equal(JSON.parse(result.stdout).verification.binding.keySha256,binding.keyHash);
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
 test('fresh install is disabled, authenticated, quota guarded and makes no provider call',()=>{
  const root=mkdtempSync(join(tmpdir(),'gemini-bootstrap-'));
  try{
