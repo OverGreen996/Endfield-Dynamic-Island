@@ -15,8 +15,10 @@ internal sealed class PlayerForm : Form
     private long _generation;
     private bool? _shufflePreference;
     private int? _repeatPreference;
+    private JsonElement? _shuffleQueue;
     private DateTimeOffset _started;
     private readonly HashSet<long> _cancelled=new();
+    private readonly string? _verificationProfile = Environment.GetEnvironmentVariable("ISLAND_MUSIC_VERIFICATION_PROFILE");
     protected override bool ShowWithoutActivation=>true;
     public PlayerForm()
     {
@@ -33,9 +35,20 @@ internal sealed class PlayerForm : Form
             using var resource=typeof(PlayerForm).Assembly.GetManifestResourceStream("MusicPlayerHost.PlayerBridge.js")!;
             using var reader=new StreamReader(resource);_script=await reader.ReadToEndAsync();
             var profile=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"EndfieldChargePlus","MusicPlayerProfile");
+            if(!string.IsNullOrEmpty(_verificationProfile))
+            {
+                var candidate=Path.GetFullPath(_verificationProfile);
+                var temporary=Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar)+Path.DirectorySeparatorChar;
+                if(!candidate.StartsWith(temporary,StringComparison.OrdinalIgnoreCase)||!Path.GetFileName(candidate).StartsWith("IslandMusicVerification-",StringComparison.Ordinal))throw new InvalidDataException("Invalid verification profile.");
+                profile=candidate;
+            }
             var env=await CoreWebView2Environment.CreateAsync(null,profile,new(){AreBrowserExtensionsEnabled=true});
             _controller=await env.CreateCoreWebView2ControllerAsync(Handle);_controller.Bounds=new Rectangle(0,0,1280,720);
             var core=_controller.CoreWebView2;
+            // Own natural-end routing before YouTube installs its capture handlers.
+            // Poll-time injection alone can arrive after the provider advances to item two.
+            await core.AddScriptToExecuteOnDocumentCreatedAsync(_script);
+            if(_verificationProfile is not null)core.IsMuted=true;
             core.NewWindowRequested+=(_,e)=>e.Handled=true;core.DownloadStarting+=(_,e)=>e.Cancel=true;
             core.PermissionRequested+=(_,e)=>e.State=CoreWebView2PermissionState.Deny;
             core.NavigationStarting+=(_,e)=>{if(!Uri.TryCreate(e.Uri,UriKind.Absolute,out var u)||u.Scheme!="https"||u.Host!="www.youtube.com")e.Cancel=true;};
@@ -77,7 +90,7 @@ internal sealed class PlayerForm : Form
                 var url=r.GetProperty("url").GetString()??"";
                 if(!Regex.IsMatch(url,@"^https://www\.youtube\.com/playlist\?list=[A-Za-z0-9_-]{3,150}$"))throw new InvalidDataException("不合法的播放清單");
                 _playlist=url.Split("list=")[1];_generation=r.GetProperty("generation").GetInt64();_started=DateTimeOffset.UtcNow;
-                _shufflePreference=null;_repeatPreference=null;
+                _shufflePreference=null;_repeatPreference=null;_shuffleQueue=null;
                 Opacity=0;Show();_controller!.IsVisible=true;
                 _controller.CoreWebView2.Navigate(url);Write(new{type="ack",id,ok=true});return;
             }
@@ -89,10 +102,13 @@ internal sealed class PlayerForm : Form
             var value=r.GetProperty("value").GetDouble();if(!double.IsFinite(value))throw new InvalidDataException();
             var args=JsonSerializer.Serialize(new{kind,value});
             var commandGeneration=_generation;
-            var result=await Script($"(()=>{{if(location.hostname!=='www.youtube.com')return false;{_script};return window.islandMusic.command({args});}})()");
+            var preferences=JsonSerializer.Serialize(new{shuffle=_shufflePreference,repeat=_repeatPreference,queue=_shuffleQueue});
+            var result=await Script($"(()=>{{if(location.hostname!=='www.youtube.com')return null;{_script};window.islandMusic.restore({preferences});const ok=window.islandMusic.command({args});return {{ok,queue:window.islandMusic.exportQueue()}};}})()");
             if(commandGeneration!=_generation||_cancelled.Remove(id)||expires<DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()){Write(new{type="ack",id,ok=false});return;}
-            if(result.ValueKind==JsonValueKind.True){if(kind=="Shuffle")_shufflePreference=value==1;if(kind=="Repeat")_repeatPreference=(int)value;}
-            Write(new{type="ack",id,ok=result.ValueKind==JsonValueKind.True});await PollAsync();
+            var success=result.ValueKind==JsonValueKind.Object&&result.TryGetProperty("ok",out var ok)&&ok.ValueKind==JsonValueKind.True;
+            if(success){if(kind=="Shuffle")_shufflePreference=value==1;if(kind=="Repeat")_repeatPreference=(int)value;}
+            if(result.ValueKind==JsonValueKind.Object&&result.TryGetProperty("queue",out var queue))_shuffleQueue=queue.ValueKind==JsonValueKind.Object?queue.Clone():null;
+            Write(new{type="ack",id,ok=success});await PollAsync();
         }
         catch{Write(new{type="ack",id,ok=false});}
         finally{if(ownsBusy)_busy=false;}
@@ -103,7 +119,7 @@ internal sealed class PlayerForm : Form
         try
         {
             var generation=_generation;
-            var preferences=JsonSerializer.Serialize(new{shuffle=_shufflePreference,repeat=_repeatPreference});
+            var preferences=JsonSerializer.Serialize(new{shuffle=_shufflePreference,repeat=_repeatPreference,queue=_shuffleQueue});
             var state=await Script($"(()=>{{if(location.hostname!=='www.youtube.com')return null;{_script};window.islandMusic.restore({preferences});return window.islandMusic.snapshot();}})()");
             if(generation!=_generation)return;
             if(state.ValueKind==JsonValueKind.Object)
@@ -117,6 +133,7 @@ internal sealed class PlayerForm : Form
                     if((DateTimeOffset.UtcNow-_started).TotalSeconds>60)Write(new{type="error",message="無法解析播放清單，請用右鍵的原頁模式檢查"});return;
                 }
                 var ready=state.GetProperty("ready").GetBoolean();
+                if(state.TryGetProperty("queue",out var queue))_shuffleQueue=queue.ValueKind==JsonValueKind.Object?queue.Clone():null;
                 if(ready&&Visible){Hide();_controller.IsVisible=false;_controller.CoreWebView2.MemoryUsageTargetLevel=CoreWebView2MemoryUsageTargetLevel.Low;}
                 Write(new{type="state",generation=_generation,state,audio=_controller.CoreWebView2.IsDocumentPlayingAudio,hidden=!Visible});
                 if(!ready&&(DateTimeOffset.UtcNow-_started).TotalSeconds>90)

@@ -87,6 +87,7 @@ public sealed class PersonalAssistantStore
     private static bool UnsafeMemory(string text, bool prohibition=false) => Regex.IsMatch(text, prohibition ? "(?i)AIza[\\w-]+|sk-[\\w-]+|[a-z0-9_-]{32,}|\\d{8,}|忽略.*指令|system.?prompt|執行.*命令" : "(?i)密碼|口令|金鑰|api.?key|token|otp|信用卡|身分證|身份證|護照|帳號|銀行|病歷|地址|電話|手機號|AIza[\\w-]+|sk-[\\w-]+|忽略.*指令|system.?prompt|執行.*命令");
     public static string? CategoryFor(string text)
     {
+        if (Regex.IsMatch(text, "^(?:請)?(?:不需要|不用|不要|別)(?:每次(?:回答)?(?:都)?|一直|總是|老是)?(?:叫|喊|稱呼|提)我(?:的)?(?:名字|姓名|全名|暱稱)(?:[。！!])?$")) return "回答方式";
         if (Regex.IsMatch(text, "^(我不希望\\s*(?:你|AI|ai|助理)|我討厭\\s*(?:你|AI|ai|助理)|我希望\\s*(?:你|AI|ai|助理)(?:以後)?(?:不要|別)|以後(?:請)?不要|以後(?:請)?別)")) return "互動禁忌";
         if (Regex.IsMatch(text, "^(我叫|我的名字是|我的暱稱是|我是.{1,20}(人|學生|工程師|設計師)|我的職業是)")) return "身分資料";
         if (Regex.IsMatch(text, "^(我喜歡|我不喜歡|我偏好|我最愛|我的興趣是)")) return "喜好偏好";
@@ -124,7 +125,7 @@ public sealed class PersonalAssistantStore
         string text = question.Trim().TrimEnd('。','！','!');
         if (suggestion is null || !Categories.Contains(suggestion.category) ||
             text != suggestion.quote?.Trim().TrimEnd('。','！','!') || text.Length is < 3 or > 160 ||
-            !Regex.IsMatch(text,"^(?:我|我的|以後回答|回答時請|請用)") || Hypothetical(text) ||
+            (!Regex.IsMatch(text,"^(?:我|我的|以後回答|回答時請|請用)") && CategoryFor(text) is null) || Hypothetical(text) ||
             UnsafeMemory(text,suggestion.category=="互動禁忌") ||
             Regex.IsMatch(text,"今天|現在|這次|暫時|可能|好像|也許|或許|不確定|外星|超人|神仙|魔王|總統|世界首富|[。；;\\n]|(?:他|她|別人|朋友)(?:也|有|養|喜歡|叫)")) return null;
         string category = CategoryFor(text) ?? suggestion.category;
@@ -140,9 +141,18 @@ public sealed class PersonalAssistantStore
         else { result.Add(new("user", "以下是我明確保存的個人背景。")); result.Add(new("model", "僅在相關時參考。"+data)); }
         return result;
     }
-    public LocalAssistantResult? Handle(string text, DateTimeOffset now)
+    public LocalAssistantResult? Handle(string text, DateTimeOffset now, string? previousUserText = null)
     {
         text = text.Trim();
+        // Resolve only an explicit reference to the immediately previous user turn.
+        // Never search old history or extract a fact from the model's acknowledgement.
+        if (Regex.IsMatch(text, "^(?:請|幫我)?(?:記住|記下|記錄|記得)(?:一下|上一句|剛剛那句|這個|這點)?[。！!]*$"))
+        {
+            var memory = previousUserText is null ? null : ObserveSelfStatement(previousUserText, now);
+            return memory is null
+                ? new("尚未新增記憶：上一句不是明確、持續性的個人資料或偏好。請直接說「記住：你的具體偏好」，或在記憶宮殿新增。")
+                : new($"已記住〔{memory.Category}〕{memory.Text}\n可在右鍵 → 記憶宮殿修改或刪除。", memory.Id);
+        }
         var schedule=Regex.Match(text,"^(?:請|幫我|請幫我)(?:安排|設定提醒|設定定時提醒)[：: ]*(.+)$");
         if(schedule.Success&&!Hypothetical(text))
         {

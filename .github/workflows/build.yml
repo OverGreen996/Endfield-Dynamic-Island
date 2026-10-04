@@ -16,7 +16,10 @@ jobs:
           node-version: '24'
       - name: Shared Hub checks (synthetic policy, no model or private data)
         shell: pwsh
-        run: ./integrations/gemini-hub/Test.ps1
+        run: |
+          ./integrations/gemini-hub/Test.ps1
+          ./integrations/gemini-hub/Test-Setup.ps1
+          node --test tests/player-bridge.test.cjs
   build:
     runs-on: windows-latest
     timeout-minutes: 15

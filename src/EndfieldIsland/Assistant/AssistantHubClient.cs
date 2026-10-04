@@ -72,6 +72,7 @@ public sealed class AssistantHubClient : IDisposable
 
     public static string ErrorText(string? code) => code switch
     {
+        "disabled" => LocalizationManager.Text("AI 尚未啟用。請在設定 → AI 助理貼上自己的金鑰，確認免費方案後套用。", "AI is not enabled. Open Settings → AI Assistant, paste your key, confirm the free tier and apply."),
         "api_key_not_configured_or_mismatch" => LocalizationManager.TranslateLiteral("尚未設定 Gemini。請在設定 → AI 助理輸入 API Key；也可切換「只搜尋」。"),
         "free_tier_verification_expired" => LocalizationManager.TranslateLiteral("免費方案驗證已到期，Gemini 已鎖定；XNG 搜尋仍可使用。"),
         "daily_request_limit" or "daily_token_limit" => LocalizationManager.TranslateLiteral("今日 Gemini 本機用量已達上限；可切換「只搜尋」。"),

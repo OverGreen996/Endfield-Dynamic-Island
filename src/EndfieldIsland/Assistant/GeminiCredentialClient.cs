@@ -19,7 +19,19 @@ public sealed class GeminiCredentialClient
         catch { throw new InvalidOperationException("金鑰已加密儲存，但 AI 服務未能重新啟動。請稍後重新套用。"); }
     }
 
-    private async Task RunAsync(string script, string? input, CancellationToken cancellation)
+    public async Task ConfigureFreeAsync(string key, bool freeConfirmed, CancellationToken cancellation)
+    {
+        if (!freeConfirmed) throw new InvalidOperationException(LocalizationManager.Text("請先確認此金鑰的專案使用免費方案，且未啟用付費。", "Confirm that this key's project is on the free tier with billing disabled."));
+        if (string.IsNullOrWhiteSpace(key) || key.Length > 160) throw new InvalidOperationException("請輸入 Gemini API Key。");
+        await RunAsync("Configure-GeminiHubFromStdin.ps1", key.Trim(), cancellation, "-FreeConfirmed");
+        try { await RunAsync("Restart-GeminiHub.ps1", null, cancellation); }
+        catch (OperationCanceledException) { throw; }
+        catch { throw new InvalidOperationException("金鑰已加密儲存，但 AI 服務未能重新啟動。請稍後重新套用。"); }
+    }
+
+    public Task EnsureStartedAsync(CancellationToken cancellation) => RunAsync("Ensure-GeminiHub.ps1", null, cancellation);
+
+    private async Task RunAsync(string script, string? input, CancellationToken cancellation, string? inputFlag = "-ReplaceExisting")
     {
         var file = Path.Combine(_root, script);
         if (!File.Exists(file)) throw new InvalidOperationException("找不到共用 Gemini 服務的設定工具。");
@@ -27,7 +39,7 @@ public sealed class GeminiCredentialClient
         { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = _root, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true, StandardInputEncoding = new UTF8Encoding(false) };
         start.ArgumentList.Add("-NoProfile"); start.ArgumentList.Add("-ExecutionPolicy"); start.ArgumentList.Add("Bypass");
         start.ArgumentList.Add("-File"); start.ArgumentList.Add(file);
-        if (input is not null) start.ArgumentList.Add("-ReplaceExisting");
+        if (input is not null && inputFlag is not null) start.ArgumentList.Add(inputFlag);
         using var process = Process.Start(start) ?? throw new InvalidOperationException("無法開啟本機金鑰設定工具。");
         // Drain output without putting credential-helper errors or secrets into app logs.
         var output = process.StandardOutput.ReadToEndAsync();

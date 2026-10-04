@@ -148,7 +148,9 @@ public partial class SettingsWindow : Window
         OpenMusicPlaylistBtn.Click += (_, _) => { if (SaveMusicPlaylist()) MusicRequested?.Invoke(MusicMode.Playlist); };
         FollowBrowserMusicBtn.Click += (_, _) => MusicRequested?.Invoke(MusicMode.Browser);
         ShowMusicBtn.Click += (_, _) => MusicRequested?.Invoke(null);
-        GeminiKeyInput.TextChanged += (_, _) => SaveGeminiKeyBtn.IsEnabled = !_savingGeminiKey && !string.IsNullOrWhiteSpace(GeminiKeyInput.Text);
+        void RefreshKeySubmit() => SaveGeminiKeyBtn.IsEnabled = !_savingGeminiKey && GeminiFreeConfirmation.IsChecked == true && !string.IsNullOrWhiteSpace(GeminiKeyInput.Text);
+        GeminiKeyInput.TextChanged += (_, _) => RefreshKeySubmit();
+        GeminiFreeConfirmation.IsCheckedChanged += (_, _) => RefreshKeySubmit();
         SaveGeminiKeyBtn.Click += async (_, _) => await SaveGeminiKeyAsync();
         RefreshGeminiUsageBtn.Click += async (_, _) => await RefreshGeminiUsageAsync();
         Opened += async (_, _) => await RefreshGeminiUsageAsync();
@@ -217,14 +219,19 @@ public partial class SettingsWindow : Window
     private async Task SaveGeminiKeyAsync()
     {
         if (_savingGeminiKey || string.IsNullOrWhiteSpace(GeminiKeyInput.Text)) return;
+        if (GeminiFreeConfirmation.IsChecked != true)
+        {
+            GeminiKeyStatusText.Text = LocalizationManager.Text("請先確認此金鑰的專案使用免費方案，且未啟用付費。", "Confirm that this key's project is on the free tier with billing disabled.");
+            return;
+        }
         var key = GeminiKeyInput.Text;
         _savingGeminiKey = true; GeminiKeyInput.Text = "";
-        GeminiKeyInput.IsEnabled = false; SaveGeminiKeyBtn.IsEnabled = false; RefreshGeminiUsageBtn.IsEnabled = false;
+        GeminiKeyInput.IsEnabled = false; GeminiFreeConfirmation.IsEnabled = false; SaveGeminiKeyBtn.IsEnabled = false; RefreshGeminiUsageBtn.IsEnabled = false;
         GeminiKeyStatusText.Text = LocalizationManager.TranslateLiteral("正在加密儲存並套用…");
         _geminiKeyRequest?.Dispose(); _geminiKeyRequest = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         try
         {
-            await new GeminiCredentialClient().ConfigureAsync(key, _geminiKeyRequest.Token);
+            await new GeminiCredentialClient().ConfigureFreeAsync(key, true, _geminiKeyRequest.Token);
             if (!_geminiSettingsClosed) GeminiKeyStatusText.Text = LocalizationManager.TranslateLiteral("金鑰已加密儲存並套用；沒有發出 AI 請求。");
         }
         catch (OperationCanceledException) { if (!_geminiSettingsClosed) GeminiKeyStatusText.Text = LocalizationManager.TranslateLiteral("套用未完成，請稍後再試；每日額度保留。"); }
@@ -232,7 +239,7 @@ public partial class SettingsWindow : Window
         finally
         {
             key = null; _savingGeminiKey = false;
-            if (!_geminiSettingsClosed) { GeminiKeyInput.IsEnabled = true; RefreshGeminiUsageBtn.IsEnabled = true; }
+            if (!_geminiSettingsClosed) { GeminiKeyInput.IsEnabled = true; GeminiFreeConfirmation.IsEnabled = true; RefreshGeminiUsageBtn.IsEnabled = true; }
         }
     }
 

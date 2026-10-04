@@ -23,7 +23,7 @@ export function createHub(guard,chat,token,{xng=new XngConnection(),assistant=ne
       const port=server.address()?.port;
       if(!['127.0.0.1:'+port,'localhost:'+port].includes(req.headers.host)) return send(403,{error:'invalid_host'});
       if(req.method==='GET'&&req.url==='/usage') return send(200,guard.status(chat.keyValid()));
-      if(req.method==='GET'&&req.url==='/health') return send(200,{service:'Gemini Usage Hub',version:'0.3.0',capabilities:{image_input:true,memory_classification:true,structured_memory_response:true,gemini_first_planning:true,trusted_taipei_clock:true},search_tools:false,paid_allowed:false,key_present:chat.keyValid()});
+      if(req.method==='GET'&&req.url==='/health') return send(200,{service:'Gemini Usage Hub',version:'0.4.0',capabilities:{image_input:true,memory_classification:true,structured_memory_response:true,gemini_first_planning:true,trusted_taipei_clock:true},search_tools:false,paid_allowed:false,key_present:chat.keyValid()});
       if(req.method==='GET'&&req.url==='/xng/status') return send(200,await xng.status({refresh:true,signal:cancellation.signal}));
       if(req.method!=='POST'||!['/chat','/assistant'].includes(req.url)) return send(404,{error:'route_not_found'});
       if(!req.headers['content-type']?.startsWith('application/json')) return send(415,{error:'json_required'});

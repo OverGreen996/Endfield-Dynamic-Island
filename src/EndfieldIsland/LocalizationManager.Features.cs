@@ -6,6 +6,12 @@ public static partial class LocalizationManager
     {
         var features=new Dictionary<string,string>
         {
+            ["貼上你自己的 Gemini API Key"]="Paste your own Gemini API key",
+            ["目前上限以以下用量顯示為準。同一金鑰保留已核對的限制與今日用量；儲存及套用不呼叫 Google。"]="Current limits are shown in the usage status below. The same key keeps its verified limits and today's usage; saving and applying do not call Google.",
+            ["首次設定／更換金鑰的限制說明"]="Limits for first setup or a different key",
+            ["只有首次設定或更換不同金鑰，才預設採本機 20 次／日、3 次／分鐘的保守限制；這不是 Google 的實際額度。原本已核對的同一金鑰不會被降低。套用會重新啟動共用 AI 服務。"]="Only first setup or a different key starts with conservative local caps of 20 requests/day and 3/minute. These are not Google's actual quota. The same verified key is not downgraded. Applying restarts the shared AI service.",
+            ["我已確認此金鑰的專案使用免費方案，且未啟用付費。"]="I confirmed this key's project uses the free tier with billing disabled.",
+            ["新金鑰預設本機上限 20 次／日、3 次／分鐘；這不是 Google 實際剩餘額度。既有同一金鑰的限制與用量保留。套用會重新啟動共用 AI 服務，設定過程不呼叫 Google。"]="New keys start with local limits of 20 requests/day and 3/minute, not Google's actual remaining quota. Existing limits and usage for the same key are kept. Applying restarts the shared AI service without calling Google.",
             ["桌面控制中心"]="Desktop control center",
             ["本機工作站 · 搜尋 / 音樂 / 提醒"]="Local workstation · Search / Music / Reminders",
             ["AI 助理"]="AI Assistant",

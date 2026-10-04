@@ -105,10 +105,14 @@
               <TextBlock Text="Gemini API Key" FontSize="16" Foreground="{DynamicResource Industrial.Info}" FontWeight="SemiBold"/>
               <TextBlock Text="金鑰只加密保存在這台電腦。儲存不扣 AI 次數；不會顯示已儲存的金鑰。" FontSize="13" Foreground="#DDDDDD" TextWrapping="Wrap"/>
               <Grid ColumnDefinitions="*,Auto">
-                <TextBox x:Name="GeminiKeyInput" PasswordChar="●" MaxLength="160" Watermark="貼上目前已核對專案的 API Key" AutomationProperties.Name="Gemini API Key" Height="42" Margin="0,0,12,0"/>
+                <TextBox x:Name="GeminiKeyInput" PasswordChar="●" MaxLength="160" Watermark="貼上你自己的 Gemini API Key" AutomationProperties.Name="Gemini API Key" Height="42" Margin="0,0,12,0"/>
                 <Button x:Name="SaveGeminiKeyBtn" Classes="industrialPrimary" Grid.Column="1" Content="儲存並套用金鑰" Height="42" IsEnabled="False" Background="#E6E744" Foreground="#202020"/>
               </Grid>
-              <TextBlock Text="套用會重新啟動共用 AI 服務。每日額度與免費方案核對紀錄保留；其他專案須先核對方案與額度。" FontSize="13" Foreground="#AAA99C" TextWrapping="Wrap"/>
+              <CheckBox x:Name="GeminiFreeConfirmation" Content="我已確認此金鑰的專案使用免費方案，且未啟用付費。" Foreground="#DDDDDD" FontSize="13"/>
+              <TextBlock Text="目前上限以以下用量顯示為準。同一金鑰保留已核對的限制與今日用量；儲存及套用不呼叫 Google。" FontSize="13" Foreground="#DDDDDD" TextWrapping="Wrap"/>
+              <Expander Header="首次設定／更換金鑰的限制說明" FontSize="13" Foreground="#AAA99C">
+                <TextBlock Text="只有首次設定或更換不同金鑰，才預設採本機 20 次／日、3 次／分鐘的保守限制；這不是 Google 的實際額度。原本已核對的同一金鑰不會被降低。套用會重新啟動共用 AI 服務。" Margin="0,8,0,0" TextWrapping="Wrap"/>
+              </Expander>
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock x:Name="GeminiKeyStatusText" Text="正在查詢本機 AI 狀態…" FontSize="13" Foreground="#DDDDDD" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"/>
                 <Button x:Name="RefreshGeminiUsageBtn" Grid.Column="1" Content="查詢用量" Height="36"/>

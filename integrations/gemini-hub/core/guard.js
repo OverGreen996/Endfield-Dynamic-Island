@@ -49,9 +49,12 @@ export function validatePolicy(p) {
       !/^[A-Za-z0-9_-]{4}$/.test(p.verification.keySuffix ?? '') ||
       !p.models || !Object.hasOwn(p.models, p.defaultModel)) throw new Locked('invalid_policy', 503);
   for (const [model, v] of Object.entries(p.models)) {
+    const conservative = p.providerLimitsVerified === false;
     if (model !== 'gemini-3.5-flash-lite' ||
         !positive(v.outputReservation) || v.outputReservation < 65536 || v.outputReservation < p.maxOutputTokens ||
-        ['rpm', 'tpm', 'rpd'].some(k => !positive(v.official?.[k]) || !positive(v.local?.[k]) || v.local[k] > v.official[k]))
+        (conservative ? v.official !== null || p.dailyRequests > 20 || v.local?.rpm > 3 || v.local?.tpm > 15000 || v.local?.rpd > 20 ||
+          ['rpm','tpm','rpd'].some(k=>!positive(v.local?.[k])) :
+          ['rpm', 'tpm', 'rpd'].some(k => !positive(v.official?.[k]) || !positive(v.local?.[k]) || v.local[k] > v.official[k])))
       throw new Locked('invalid_model_policy', 503);
   }
   return structuredClone(p);
@@ -239,6 +242,7 @@ export class UsageGuard {
       return {project:p.project,scope:'local_hub_only',google_live_remaining:null,provider_usage_delay_minutes:15,
         default_model:p.defaultModel,free_tier_verified_until:p.verification.validUntil,key_present:keyPresent,
         free_tier_verification_mode:p.verification.mode??'time-limited',
+        provider_limits_verified:p.providerLimitsVerified!==false,
         free_tier_confirmed_at:p.verification.observedAt,
         billing_status_source:'local_confirmation',billing_status_live_verified:false,
         paid_allowed:false,search_tools_allowed:false,day_timezone:'America/Los_Angeles',next_daily_reset:nextReset(ms),

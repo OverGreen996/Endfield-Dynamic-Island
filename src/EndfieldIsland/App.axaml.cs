@@ -65,10 +65,22 @@ public partial class App : Application
             InitializePersonalAssistant();
             StartSecondInstanceActivationListener();
             _ = RunStartupUpdateCheckAsync();
+            _ = EnsureSharedAiAsync();
             desktop.Exit += OnDesktopExit;
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static async Task EnsureSharedAiAsync()
+    {
+        try
+        {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            await new Assistant.GeminiCredentialClient().EnsureStartedAsync(timeout.Token);
+            AppLog.Info("Shared AI service ready; no provider request made.");
+        }
+        catch { AppLog.Info("Shared AI service requires setup; open AI settings. Existing processes were left untouched."); }
     }
 
     private SettingsWindow CreateSettingsWindow(AppSettings settings)

@@ -54,7 +54,7 @@ public sealed class BackgroundYouTubeSession : IPlaylistMusicSession
         {
             while(!_disposed&&ReferenceEquals(_process,process)&&await process.StandardOutput.ReadLineAsync() is string line)
             {
-                if(line.Length>16384)continue;
+                if(line.Length>262144)continue;
                 using var doc=JsonDocument.Parse(line);var r=doc.RootElement;
                 var type=r.GetProperty("type").GetString();
                 if(type=="status"){lock(_gate){_updated=DateTimeOffset.UtcNow;_snapshot=_snapshot with{Notice=r.GetProperty("message").GetString()};}}
@@ -66,12 +66,13 @@ public sealed class BackgroundYouTubeSession : IPlaylistMusicSession
                 var parsed=JsonSerializer.Deserialize<YouTubePlayerState>(s.GetRawText());
                 if(parsed is null||!YouTubePlayerState.Valid(parsed))continue;
                 var ad=s.GetProperty("ad").GetBoolean();var canShuffle=s.GetProperty("canShuffle").GetBoolean();var canRepeat=s.GetProperty("canRepeat").GetBoolean();
+                var switching=s.TryGetProperty("switching",out var transition)&&transition.ValueKind==JsonValueKind.True;
                 lock(_gate)
                 {
                     _updated=DateTimeOffset.UtcNow;
                     if(!string.IsNullOrEmpty(parsed.error))_error=parsed.error;else if(parsed.ready)_error="";
                     _snapshot=new(parsed.ready,parsed.title,parsed.artist,"專用 YouTube 背景播放器",parsed.playing,parsed.position,parsed.duration,
-                        parsed.ready,parsed.ready,parsed.ready&&parsed.count>1&&!ad,parsed.ready&&parsed.count>1&&!ad,parsed.ready&&!ad,null,
+                        parsed.ready,parsed.ready,parsed.ready&&parsed.count>1&&!ad&&!switching,parsed.ready&&parsed.count>1&&!ad&&!switching,parsed.ready&&!ad,null,
                         parsed.ready&&canShuffle&&!ad,parsed.shuffle,parsed.ready&&canRepeat&&!ad,parsed.repeat,ad?"YouTube 正在播放廣告":_error.Length>0?_error:"指定清單 · 背景播放");
                     if(_artVideo!=parsed.video){_artVideo=parsed.video;_art=null;}
                 }

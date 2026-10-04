@@ -1,14 +1,23 @@
 #ifndef PayloadDir
   #error PayloadDir must point to the self-contained publish directory.
 #endif
+#ifndef HubPayloadDir
+  #error HubPayloadDir must point to the sanitized shared Hub payload.
+#endif
+#ifndef HubDataDir
+  #define HubDataDir "{userdocs}\ChatGPT\GeminiHub"
+#endif
 #ifndef AppVersion
-  #define AppVersion "0.23.1"
+  #define AppVersion "0.24.0"
 #endif
 #ifndef OutputDir
   #define OutputDir "..\artifacts\installer"
 #endif
 #ifndef SetupAppId
   #define SetupAppId "357B1D2D-A547-4E97-A759-E1D814BF9023"
+#endif
+#ifndef AppMutexName
+  #define AppMutexName "Local\EndfieldChargePlus.SingleInstance"
 #endif
 
 [Setup]
@@ -27,7 +36,7 @@ PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.19041
-AppMutex=Local\EndfieldChargePlus.SingleInstance
+AppMutex={#AppMutexName}
 SetupMutex=EndfieldDynamicIslandSetup
 CloseApplications=no
 RestartApplications=no
@@ -60,16 +69,16 @@ Name: "en"; MessagesFile: "compiler:Default.isl"
 
 [Messages]
 zhTW.WelcomeLabel1=讓桌面，成為你的控制中心。
-zhTW.WelcomeLabel2=安裝終末地 靈動島。%n%nAI 對話、音樂、通知與效能資訊，收進同一座島。%n%n既有設定、對話與記憶會保留。安裝僅影響靈動島，不會修改 XNG 或 Gemini 服務。%n%n繼續前請從系統匣退出靈動島。
+zhTW.WelcomeLabel2=安裝終末地 靈動島。%n%nAI 對話、音樂、通知與效能資訊，收進同一座島。%n%n既有設定、對話、記憶與用量會保留。內含共用 Gemini Hub 與執行環境；XNG 仍獨立管理。%n%n繼續前請從系統匣退出靈動島。
 zhTW.FinishedHeadingLabel=桌面系統已就緒。
-zhTW.FinishedLabel=終末地 靈動島已完成安裝。%n%nAlt+A：AI 助理　Alt+M：音樂島%n%nAI 對話需要本機 Gemini Hub；YouTube 清單需要 WebView2。你可以先使用 HUD、通知與提醒。
+zhTW.FinishedLabel=終末地 靈動島已完成安裝。%n%nAlt+A：AI 助理　Alt+M：音樂島%n%nAI：到設定貼上自己的金鑰並確認免費方案。共用服務解除安裝後仍保留；搜尋需另裝 XNG。
 zhTW.ButtonNext=繼續(&N)  →
 zhTW.ButtonInstall=開始安裝(&I)  →
 zhTW.ButtonFinish=完成(&F)
 en.WelcomeLabel1=Your desktop. One control center.
-en.WelcomeLabel2=Install Endfield Dynamic Island.%n%nConversations, music, notifications and system telemetry, in one island.%n%nYour existing settings, conversations and memories are preserved. XNG and Gemini services remain separate.%n%nExit the island from its tray menu before continuing.
+en.WelcomeLabel2=Install Endfield Dynamic Island.%n%nConversations, music, notifications and system telemetry, in one island.%n%nYour settings, conversations, memories and usage are preserved. Shared Gemini Hub and its runtime are included. XNG remains separate.%n%nExit the island from its tray menu before continuing.
 en.FinishedHeadingLabel=Your desktop system is ready.
-en.FinishedLabel=Endfield Dynamic Island is installed.%n%nAlt+A: AI assistant    Alt+M: Music%n%nAI requires your local Gemini Hub. YouTube playlists require WebView2. HUD, notifications and reminders can be used independently.
+en.FinishedLabel=Endfield Dynamic Island is installed.%n%nAlt+A: AI assistant    Alt+M: Music%n%nAI: paste your own key in Settings and confirm the free tier. The shared Hub is kept after uninstall; search requires a separate XNG installation.
 
 [CustomMessages]
 zhTW.DesktopShortcut=建立桌面捷徑
@@ -79,6 +88,7 @@ zhTW.PhaseReady=02 / 確認部署
 zhTW.PhaseInstall=03 / 寫入程式
 zhTW.PhaseDone=04 / 桌面系統就緒
 zhTW.PhaseWelcome=00 / 系統接入
+zhTW.HubSetupFailed=共用 AI 服務未能啟動。既有服務與資料已保留；請到 AI 設定重新套用，或檢查 8890 是否被其他程式占用。
 en.DesktopShortcut=Create a desktop shortcut
 en.LaunchIsland=Open Endfield Dynamic Island
 en.PhaseSelect=01 / CONFIGURE
@@ -86,12 +96,18 @@ en.PhaseReady=02 / REVIEW
 en.PhaseInstall=03 / DEPLOY
 en.PhaseDone=04 / SYSTEM READY
 en.PhaseWelcome=00 / CONNECT
+en.HubSetupFailed=The shared AI service could not start. Existing services and data were preserved. Apply your key again in AI settings, or check whether another app uses port 8890.
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:DesktopShortcut}"; Flags: checkedonce
 
 [Files]
-Source: "{#PayloadDir}\*"; DestDir: "{app}"; Excludes: "*.pdb,Start.ps1"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#PayloadDir}\*"; DestDir: "{app}"; Excludes: "*.pdb,Start.ps1,SharedHubPayload\*"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#HubPayloadDir}\core\*"; DestDir: "{#HubDataDir}\core"; Flags: ignoreversion uninsneveruninstall
+Source: "{#HubPayloadDir}\*.ps1"; DestDir: "{#HubDataDir}"; Flags: ignoreversion uninsneveruninstall
+Source: "{#HubPayloadDir}\*.cmd"; DestDir: "{#HubDataDir}"; Flags: ignoreversion uninsneveruninstall
+Source: "{#HubPayloadDir}\README.md"; DestDir: "{#HubDataDir}"; Flags: ignoreversion uninsneveruninstall
+Source: "{#HubPayloadDir}\runtime\*"; DestDir: "{#HubDataDir}\runtime"; Flags: onlyifdoesntexist uninsneveruninstall
 
 [Icons]
 Name: "{group}\終末地 靈動島"; Filename: "{app}\EndfieldChargePlus.exe"; WorkingDir: "{app}"
@@ -104,6 +120,7 @@ Filename: "{app}\EndfieldChargePlus.exe"; Description: "{cm:LaunchIsland}"; Flag
 [Code]
 var
   PhaseLabel, SystemLabel, ReadySummary: TNewStaticText;
+  HubSetupFailed: Boolean;
 
 procedure InitializeWizard;
 begin
@@ -152,25 +169,37 @@ begin
   else if CurPageID = wpFinished then PhaseLabel.Caption := CustomMessage('PhaseDone')
   else PhaseLabel.Caption := CustomMessage('PhaseSelect');
   if CurPageID = wpReady then ReadySummary.Caption := WizardForm.ReadyMemo.Lines.Text;
+  if (CurPageID = wpFinished) and HubSetupFailed then
+    WizardForm.FinishedLabel.Caption := WizardForm.FinishedLabel.Caption + #13#10#13#10 + CustomMessage('HubSetupFailed');
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
-var OldCommand: String;
+var OldCommand: String; ResultCode: Integer;
 begin
   { Preserve startup enablement when migrating from a previous location.
     Never create a startup preference for a user who has not enabled it. }
-  if CurStep = ssPostInstall then
+  if CurStep = ssPostInstall then begin
+#ifndef VerificationBuild
     if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Endfield Charge Plus', OldCommand) then
       if (Pos('EndfieldChargePlus.exe', OldCommand) > 0) and (Pos('--autostart', OldCommand) > 0) then
         RegWriteStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Endfield Charge Plus', '"' + ExpandConstant('{app}\EndfieldChargePlus.exe') + '" --autostart');
+#endif
+    HubSetupFailed := not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+      '-NoProfile -ExecutionPolicy Bypass -File "' + ExpandConstant('{#HubDataDir}\Ensure-GeminiHub.ps1') + '"',
+      ExpandConstant('{#HubDataDir}'), SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    if ResultCode <> 0 then HubSetupFailed := True;
+    if HubSetupFailed then Log(CustomMessage('HubSetupFailed'));
+  end;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var Command: String;
 begin
   { Only remove the Run entry owned by this installation. User data is never deleted. }
+#ifndef VerificationBuild
   if CurUninstallStep = usUninstall then
     if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Endfield Charge Plus', Command) then
       if CompareText(Command, '"' + ExpandConstant('{app}\EndfieldChargePlus.exe') + '" --autostart') = 0 then
         RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Endfield Charge Plus');
+#endif
 end;

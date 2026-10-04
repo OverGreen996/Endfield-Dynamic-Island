@@ -16,6 +16,23 @@ public static class PersonalAssistantProbe
         foreach(string text in new[]{"明天九點提醒我開會","明天下午十三點提醒我開會","明天25:00提醒我喝水","明天13:70提醒我喝水","今天上午九點提醒我開會","2026/02/30 14:00提醒我開會","0分鐘後提醒我休息","明天上午九點提醒我","明天上午九點提醒我開會然後再提醒我吃飯"})
             Check(ReminderTime.Parse(text,now) is null,"reject ambiguous/invalid/multi-action time: "+text);
         var path=Path.Combine(root,"personal.dpapi");var store=new PersonalAssistantStore(path);
+        var preferenceStore=new PersonalAssistantStore(Path.Combine(root,"preferences.dpapi"));
+        const string namePreference="不需要每次回答都叫我名字";
+        var preference=preferenceStore.ObserveSelfStatement(namePreference,now);
+        Check(preference?.Category=="回答方式","direct name-address preference is recognized without first-person prefix");
+        var acknowledgement=preferenceStore.Handle("記住",now,namePreference);
+        Check(acknowledgement?.SavedMemory==preference?.Id&&acknowledgement?.Text.Contains(namePreference)==true&&preferenceStore.Memories.Count==1,"remember previous user preference confirms durable save without duplication");
+        var preferenceReloaded=new PersonalAssistantStore(Path.Combine(root,"preferences.dpapi"));
+        Check(preferenceReloaded.Memories.Single().Text==namePreference&&preferenceReloaded.WithMemory([],"你好").Any(m=>m.text.Contains(namePreference)),"name preference survives restart and reaches next model conversation");
+        var legacyContext=new PersonalAssistantStore(Path.Combine(root,"legacy-preferences.dpapi"));
+        Check(legacyContext.Handle("記住上一句",now,namePreference)?.SavedMemory is not null,"follow-up can save previously unrecognized preference from existing conversation");
+        Check(legacyContext.AcceptModelSuggestion("不要一直叫我的全名",new("回答方式","不要一直叫我的全名"),now)?.Category=="回答方式","model-classified direct response preference passes local gate");
+        foreach(var previous in new string?[]{null,"好的。","今天不用叫我名字","不用每次叫我名字，開玩笑的","假設我喜歡紅色","我喜歡紅色嗎？","他說不用叫我名字","不要記住我的名字"})
+        {
+            int before=legacyContext.Memories.Count;
+            Check(legacyContext.Handle("記住",now,previous)?.SavedMemory is null&&legacyContext.Memories.Count==before,"context memory refuses absent, model, temporary, joke or quoted fact: "+previous);
+        }
+        Check(legacyContext.Handle("記住下一首歌曲",now)?.SavedMemory is not null,"ordinary explicit remember command is not confused with bare context reference");
         var result=store.Handle("明天上午九點提醒我開會",now);Check(result?.Text.Contains("已設定提醒")==true&&store.Reminders.Count==1,"only commit acknowledged reminder");
         store.Handle("明天上午九點提醒我開會",now);Check(store.Reminders.Count==1,"duplicate request does not duplicate reminder");
         store.Handle("幫我安排明天下午三點開會",now);Check(store.Reminders.Count==2,"explicit arrange-time command schedules locally");
@@ -58,6 +75,8 @@ public static class PersonalAssistantProbe
         Check(ReminderTime.Parse("明天上午九點提醒我不要遲到",now)?.Text=="不要遲到","negative reminder task retained verbatim");
         string corrupt=Path.Combine(root,"corrupt.dpapi");File.WriteAllText(corrupt,"retain");var broken=new PersonalAssistantStore(corrupt);bool blocked=false;try{broken.Handle("記住我叫測試",now);}catch(InvalidOperationException){blocked=true;}Check(blocked&&File.ReadAllText(corrupt)=="retain","corrupt store preserved and cannot be overwritten");
         string parent=Path.Combine(root,"file");File.WriteAllText(parent,"keep");var unavailable=new PersonalAssistantStore(Path.Combine(parent,"personal.dpapi"));bool failed=false;try{unavailable.Handle("明天上午九點提醒我開會",now);}catch(InvalidOperationException){failed=true;}Check(failed&&unavailable.Reminders.Count==0,"failed save never falsely acknowledges scheduled reminder");
+        bool preferenceFailed=false;try{unavailable.Handle("記住",now,namePreference);}catch(InvalidOperationException){preferenceFailed=true;}
+        Check(preferenceFailed&&unavailable.Memories.Count==0,"failed preference save never returns an acknowledgement");
         var capped=new PersonalAssistantStore(Path.Combine(root,"capacity.dpapi"));for(int i=0;i<300;i++)capped.Handle($"{i+1}分鐘後提醒我容量測試{i}",now);
         string oldest=capped.Reminders[0].Id,second=capped.Reminders[1].Id;capped.Handle("301分鐘後提醒我最新容量測試",now);
         Check(capped.Reminders.Count==300&&!capped.Reminders.Any(r=>r.Id==oldest)&&capped.Reminders[0].Id==second&&capped.Reminders[^1].Text=="最新容量測試","full reminders evict oldest created record in FIFO order");

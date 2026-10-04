@@ -198,7 +198,7 @@ public partial class AssistantIslandWindow : Window
         {
             var personal=_personal;
             var attached=_pastedImage;
-            var local=attached is null?personal.Handle(question,DateTimeOffset.Now):null;
+            var local=attached is null?personal.Handle(question,DateTimeOffset.Now,_session.Turns.LastOrDefault()?.Question):null;
             if(local is null&&attached is null)
             {
                 var memory=personal.ObserveSelfStatement(question,DateTimeOffset.Now);

@@ -1,4 +1,4 @@
-param([string]$Dotnet='dotnet',[ValidateSet('win-x64')][string]$Runtime='win-x64',[string]$InnoCompiler='ISCC.exe')
+param([string]$Dotnet='dotnet',[ValidateSet('win-x64')][string]$Runtime='win-x64',[string]$InnoCompiler='ISCC.exe',[string]$ExistingNodeRuntime)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot
 [xml]$project=Get-Content -LiteralPath (Join-Path $root 'src\EndfieldIsland\EndfieldChargePlus.csproj') -Raw
@@ -22,7 +22,15 @@ foreach($relative in @('EndfieldChargePlus.runtimeconfig.json','MusicPlayerHost\
 }
 if(!(Test-Path -LiteralPath (Join-Path $destination 'MusicPlayerHost\nonstop\LICENSE'))){throw 'NonStop license missing.'}
 $installerOutput=Join-Path $root 'artifacts\installer'
-& $compiler '/Qp' "/DPayloadDir=$destination" "/DAppVersion=$version" "/DOutputDir=$installerOutput" (Join-Path $root 'installer\EndfieldIsland.iss')
+$hubDestination=Join-Path $destination 'SharedHubPayload'
+New-Item -ItemType Directory -Path (Join-Path $hubDestination 'core') -Force | Out-Null
+$hubSource=Join-Path $root 'integrations\gemini-hub'
+# An explicit allowlist excludes credentials, policy, history, usage and private logs.
+Get-ChildItem -LiteralPath (Join-Path $hubSource 'core') -File | Where-Object {$_.Extension -in '.js','.json'} | ForEach-Object {Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $hubDestination 'core')}
+Get-ChildItem -LiteralPath $hubSource -File | Where-Object {$_.Extension -in '.ps1','.cmd','.md' -and $_.Name -notlike 'Test*'} | ForEach-Object {Copy-Item -LiteralPath $_.FullName -Destination $hubDestination}
+& (Join-Path $PSScriptRoot 'Get-HubRuntime.ps1') -Destination (Join-Path $hubDestination 'runtime') -ExistingRuntime $ExistingNodeRuntime
+if(Test-Path -LiteralPath (Join-Path $hubDestination 'policy.json')){throw 'Private policy cannot be packaged.'}
+& $compiler '/Qp' "/DPayloadDir=$destination" "/DHubPayloadDir=$hubDestination" "/DAppVersion=$version" "/DOutputDir=$installerOutput" (Join-Path $root 'installer\EndfieldIsland.iss')
 if($LASTEXITCODE -ne 0){throw 'Installer compilation failed.'}
 $setup=Join-Path $installerOutput "Endfield-Dynamic-Island-Setup-v$version-$Runtime.exe"
 $hash=(Get-FileHash -LiteralPath $setup -Algorithm SHA256).Hash.ToLowerInvariant()

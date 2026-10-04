@@ -6,6 +6,12 @@ import {GeminiChat} from '../gemini.js';
 import {UsageGuard} from '../guard.js';
 import {loadPolicy} from '../config.js';
 const reply=(category,quote)=>'了解，我會依情境回覆。\n<user_memory>'+JSON.stringify({memory:{category,quote}})+'</user_memory>';
+test('direct name-address preferences are admitted but jokes, quotes and temporary requests are not',()=>{
+ for(const q of ['不需要每次回答都叫我名字','不用每次都叫我的名字','不要一直叫我的全名','請不要叫我姓名'])
+  assert.deepEqual(memoryResponse(reply('回答方式',q),q).memory_suggestions,[{category:'回答方式',quote:q}],q);
+ for(const q of ['記住','好的','今天不要叫我名字','不要叫我名字，開玩笑的','不要叫我名字嗎？','他說不要叫我名字','不要記住我的名字'])
+  assert.deepEqual(memoryResponse(reply('回答方式',q),q).memory_suggestions,[],q);
+});
 test('Gemini can classify first-person pets, work, preferences and boundaries using verbatim evidence',()=>{
  for(const [category,quote] of [['個人事項','我有養一條 黑王蛇'],['身分資料','我在遊戲公司做設計'],['喜好偏好','我偏好簡短的回答'],['互動禁忌','我不希望你替我做決定'],['生活習慣','我通常晚上十點休息'],['目標計畫','我的計畫是學日文']]){
   const parsed=memoryResponse(reply(category,quote),quote);assert.deepEqual(parsed.memory_suggestions,[{category,quote}]);assert.ok(!parsed.text.includes('user_memory'));
