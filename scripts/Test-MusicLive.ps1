@@ -28,7 +28,7 @@ function Read-Until([scriptblock]$Condition,[int]$Seconds=30){
 function Command([string]$Kind,[double]$Value=0){
  if($Kind -in 'Next','Previous'){
   # Use the same readiness conditions as the physical island transport buttons.
-  Read-Until {param($m) $m.type -eq 'state' -and $m.state.ready -and !$m.state.ad -and $m.state.count -gt 1 -and !$m.state.switching} 30 | Out-Null
+  Read-Until {param($m) $m.type -eq 'state' -and $m.state.ready -and !$m.state.switching -and !$m.state.ad -and $m.state.count -gt 1 -and !$m.state.switching} 30 | Out-Null
  }
  $id=Send $Kind $Value
  $ack=Read-Until {param($m) $m.type -eq 'ack' -and $m.id -eq $id} 12
@@ -40,11 +40,12 @@ try{
  Send 'Open' | Out-Null
  Read-Until {param($m) $m.type -eq 'state' -and $m.state.ready -and $m.state.count -gt 1 -and !$m.state.ad} 90 | Out-Null
  Write-Output ('READY: '+$lastState.title+'; loaded playlist count='+$lastState.count)
+ $knownPlaylistCount=$lastState.count
  $seen.Add($lastState.video);Command 'Shuffle' 1
  Read-Until {param($m) $m.type -eq 'state' -and $m.state.ready -and $m.state.shuffle} 15 | Out-Null
  for($i=0;$i -lt $NextCount;$i++){
   $before=$lastState.video;Command 'Next'
-  Read-Until {param($m) $m.type -eq 'state' -and $m.state.ready -and !$m.state.ad -and $m.state.video -ne $before} 45 | Out-Null
+  Read-Until {param($m) $m.type -eq 'state' -and $m.state.ready -and !$m.state.switching -and !$m.state.ad -and $m.state.video -ne $before} 45 | Out-Null
   if(!$lastState.shuffle){throw 'Shuffle was lost after a track change.'}
   $seen.Add($lastState.video);Write-Output ('NEXT '+($i+1)+': '+$lastState.video+' '+$lastState.title+'; shuffle='+$lastState.shuffle)
  }
@@ -55,13 +56,16 @@ try{
  Read-Until {param($m) $m.type -eq 'state' -and $m.state.ready -and $m.state.video -eq $last} 45 | Out-Null
  $remaining=@($lastState.queue.bag);$beforeEnd=$lastState.video
  Command 'Seek' ([Math]::Max(0,$lastState.duration-1))
- Read-Until {param($m) $m.type -eq 'state' -and $m.state.ready -and !$m.state.ad -and $m.state.video -ne $beforeEnd} 45 | Out-Null
+ Read-Until {param($m) $m.type -eq 'state' -and $m.state.ready -and !$m.state.switching -and !$m.state.ad -and $m.state.video -ne $beforeEnd} 45 | Out-Null
  if(!$lastState.shuffle -or $lastState.video -notin $remaining){Write-Output ('END DIAGNOSTIC: before='+$beforeEnd+' actual='+$lastState.video+' remaining='+($remaining -join ',')+' queue='+($lastState.queue|ConvertTo-Json -Compress));throw 'Actual ended event did not use the remaining shuffled queue.'}
  Write-Output ('AUTO NEXT: '+$lastState.video+' '+$lastState.title+'; shuffle='+$lastState.shuffle)
  if($RepeatTrackId){
-  for($i=0;$lastState.video -ne $RepeatTrackId -and $i -lt [Math]::Min(200,$lastState.count*2);$i++){
+  # SPA transitions can temporarily report count=0 even when the video is ready.
+  # Keep the finite bound from the fully loaded initial playlist.
+  $maxTrackHops=[Math]::Min(200,$knownPlaylistCount*2)
+  for($i=0;$lastState.video -ne $RepeatTrackId -and $i -lt $maxTrackHops;$i++){
    $current=$lastState.video;Command 'Next'
-   Read-Until {param($m) $m.type -eq 'state' -and $m.state.ready -and !$m.state.ad -and $m.state.video -ne $current} 45 | Out-Null
+   Read-Until {param($m) $m.type -eq 'state' -and $m.state.ready -and !$m.state.switching -and !$m.state.ad -and $m.state.video -ne $current} 45 | Out-Null
   }
   if($lastState.video -ne $RepeatTrackId){throw 'Requested repeat regression track was not found in the playlist.'}
   Write-Output ('REPEAT REGRESSION TRACK: '+$lastState.video+' '+$lastState.title)

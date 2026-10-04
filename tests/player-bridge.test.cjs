@@ -12,7 +12,7 @@ function page({index=0,list=ids,ad=false}={}){
   location:{pathname:'/watch',href:'https://www.youtube.com/watch?v='+list[track],origin:'https://www.youtube.com'},navigator:{mediaSession:{}},
   Math:Object.assign(Object.create(Math),{random:()=>[.8,.2,.6,.4,.1,.9][random++%6]}),Date:{now:()=>Date.now()+clockOffset},URL,HTMLMediaElement:{prototype:{pause(){this.paused=true;}}}};
  vm.runInNewContext(source,context);const controller=context.window.islandMusic;
- return {controller,jumps,video,current:()=>list[track],index:()=>track,advanceTime(ms){clockOffset+=ms;},nativeAdvance(){track=(track+1)%list.length;video.currentTime=0;},ended(){let stopped=false;ended({target:{tagName:'VIDEO'},stopImmediatePropagation(){stopped=true;}});return stopped;}};
+ return {controller,jumps,video,current:()=>list[track],index:()=>track,advanceTime(ms){clockOffset+=ms;},nativeAdvance(index){track=index??(track+1)%list.length;video.currentTime=0;},ended(){let stopped=false;ended({target:{tagName:'VIDEO'},stopImmediatePropagation(){stopped=true;}});return stopped;}};
 }
 test('shuffle Next bypasses provider fixed-second behavior and exhausts the unplayed bag',()=>{
  const p=page();assert.equal(p.controller.command({kind:'Shuffle',value:1}),true);
@@ -87,4 +87,18 @@ test('repeat target survives full page replacement and manual next works without
 test('repeat recovery does not reload a track during an advertisement',()=>{
  const p=page({ad:true});p.controller.command({kind:'Repeat',value:2});p.nativeAdvance();p.controller.snapshot();
  assert.equal(p.current(),ids[1]);assert.equal(p.jumps.length,0);
+});
+
+test('shuffle recovers native auto-advance before ended without adopting the provider track',()=>{
+ const p=page();p.controller.command({kind:'Shuffle',value:1});p.controller.command({kind:'Next'});p.controller.snapshot();
+ const before=JSON.parse(JSON.stringify(p.controller.exportQueue()));p.nativeAdvance(ids.indexOf(before.bag[0]));
+ assert.equal(p.controller.snapshot().switching,true);assert.ok(before.bag.includes(p.current()));
+ const after=p.controller.exportQueue();assert.equal(after.history.length,before.history.length+1);
+ assert.equal(after.bag.length,before.bag.length-1);
+});
+test('shuffle with no remaining tracks pauses native auto-advance instead of repeating a played track',()=>{
+ const p=page();p.controller.command({kind:'Shuffle',value:1});
+ for(let i=1;i<ids.length;i++){p.controller.command({kind:'Next'});p.controller.snapshot();}
+ const history=JSON.stringify(p.controller.exportQueue().history);p.nativeAdvance();p.controller.snapshot();
+ assert.equal(p.video.paused,true);assert.equal(JSON.stringify(p.controller.exportQueue().history),history);
 });

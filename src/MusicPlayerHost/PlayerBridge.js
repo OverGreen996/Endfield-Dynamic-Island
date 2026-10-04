@@ -13,9 +13,10 @@ if (!window.islandMusic) {
     if(ids.length<2||!ids.includes(id))return q;
     // A native auto-advance must not consume history/bag while repeat owns a track.
     if(controller.repeat===2&&q.repeatTrack&&q.repeatTrack!==id)return q;
-    q.bag=q.bag.filter(x=>ids.includes(x)&&x!==id);
     if(q.pending&&q.pending!==id&&Date.now()<q.pendingUntil)return q;
     q.pending='';
+    if(controller.shuffle&&q.history[q.cursor]&&q.history[q.cursor]!==id)return q;
+    q.bag=q.bag.filter(x=>ids.includes(x)&&x!==id);
     if(id&&q.history[q.cursor]!==id){q.history=q.history.slice(0,q.cursor+1);q.history.push(id);if(q.history.length>256)q.history.shift();q.cursor=q.history.length-1;}
     return q;
   };
@@ -79,7 +80,13 @@ if (!window.islandMusic) {
       controller.repeatRecoveryAt=Date.now()+3000;
       p.playVideoAt(list.indexOf(queue.repeatTrack));p.playVideo?.();
     }
-    const switching=repeatDrift||!!queue?.pending&&queue.pending!==d.video_id&&Date.now()<queue.pendingUntil;
+    const shuffleDrift=!ad&&controller.shuffle&&controller.repeat!==2&&!!queue?.history[queue.cursor]&&queue.history[queue.cursor]!==d.video_id&&
+      !queue.pending&&list.includes(d.video_id)&&list.includes(queue.history[queue.cursor]);
+    if(shuffleDrift&&Date.now()>(controller.shuffleRecoveryAt||0)){
+      controller.shuffleRecoveryAt=Date.now()+3000;
+      if(!controller.nextShuffled(true))p.pauseVideo?.();
+    }
+    const switching=repeatDrift||shuffleDrift||!!queue?.pending&&queue.pending!==d.video_id&&Date.now()<queue.pendingUntil;
     return {ready,title:String(m?.title||d.title||'YouTube 播放清單').slice(0,512),artist:String(m?.artist||d.author||'YouTube').slice(0,512),video:/^[A-Za-z0-9_-]{11}$/.test(d.video_id||'')?d.video_id:'',playing:!!v&&!v.paused,position:Number.isFinite(v?.currentTime)?v.currentTime:0,duration,shuffle:controller.shuffle??(!!changed||shuffleButton?.getAttribute('aria-pressed')==='true'),repeat:controller.repeat,count:Math.min(list.length,10000),error:String(document.querySelector('.ytp-error-content-wrap')?.innerText||'').slice(0,200),ad,canShuffle:typeof p?.playVideoAt==='function'&&list.length>1,canRepeat:typeof p?.setLoop==='function'&&typeof p?.setLoopVideo==='function',queue,switching};
   };
   controller.command = ({kind,value,force=false}) => {
