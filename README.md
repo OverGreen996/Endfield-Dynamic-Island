@@ -36,13 +36,14 @@
 
 安裝版附帶 .NET 執行環境與播放器；升級及解除安裝保留使用者資料，不再配送便攜版。HUD、提醒、記憶管理與通知介面可獨立使用。YouTube 清單播放需要 Microsoft Edge WebView2 Runtime；跟隨瀏覽器模式使用 Windows 媒體介面，隨機／重播是否可用取決於瀏覽器的能力。
 
-**AI 對話與搜尋還需要獨立的本機 Gemini Hub 服務。** 此儲存庫不配送 Gemini Hub、API Key 或私人設定。現有使用者可沿用原本服務；新電腦需先完成服務部署。XNG 是可獨立更新的共用搜尋核心，參閱 [XNG-Plugin](https://github.com/OverGreen996/XNG-Plugin)。只安裝 XNG 不會自動補齊 Gemini Hub。詳見 [服務與相容性](docs/ARCHITECTURE.md)。
+**AI 對話與搜尋需要獨立的本機 Gemini Hub 服務。** 本儲存庫提供 [Gemini Hub 0.3.0 原始碼與部署教學](integrations/gemini-hub)，安裝包仍不包含 Hub、API Key 或私人設定。現有使用者可單獨更新 Hub，無須重新安裝靈動島。XNG 是可獨立更新的共用搜尋核心，參閱 [XNG-Plugin](https://github.com/OverGreen996/XNG-Plugin)。只安裝 XNG 不會自動補齊 Gemini Hub。詳見 [服務與相容性](docs/ARCHITECTURE.md)。
 
 ## 本機優先
 
 - AI 輸入框支援 `Ctrl+V` 貼圖，按送出才判讀；自動／搜尋＋AI 模式可接續 XNG 查資料。圖片不傳給 XNG，也不建立長期記憶。這是圖片理解，沒有生圖或付費備援。
 - 同一輪 Gemini 回答可辨識明確的個人原句，不另扣分類次數。假設、玩笑、第三人資料、敏感資訊及推測不自動記憶。建議 Gemini Hub 0.2.1 或更新版本，使用必填的結構化記憶判斷，避免模型漏附分類；貼圖仍相容 0.2.0。
 - XNG 提供可追溯的搜尋證據；AI 使用端整理回答。搜尋邏輯集中維護。
+- Hub 0.3.0 自動模式先由 Gemini 理解上下文、日期與查詢條件，再決定搜尋；一般聊天通常一次生成，搜尋通常兩次，均計入共用額度。普通 XNG 搜尋仍不呼叫 Gemini。
 - 正常搜尋不自動呼叫 Gemini 或付費搜尋服務。Gemini 依共用 Hub 的用量限制與免費核對規則執行。
 - 對話、提醒與記憶採 Windows 使用者加密；頭像只保存在本機。通知不會送給模型。
 - 通知與提醒不同：通知短暫顯示；提醒最多 300 筆，滿額依建立順序移除最舊項目。

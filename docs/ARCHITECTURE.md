@@ -13,7 +13,9 @@ flowchart LR
 
 `src/EndfieldIsland` 是 Avalonia 前端；`src/MusicPlayerHost` 是背景 WebView2 原頁播放器。搜尋算法、證據排序與 Gemini 用量控制由共用後端維護，不複製到各個 UI。
 
-AI 前端目前依賴 Gemini Hub 的 `/assistant`、`/usage`、`/xng/status` 及本機 Bearer 驗證。Hub 固定本機 8890；狀態辨識與 XNG 自訂安裝由 Hub 負責。此儲存庫只包含使用端，沒有配送 Hub。一般 HUD 與個人提醒不需要呼叫模型。
+AI 前端依賴 Gemini Hub 的 `/assistant`、`/usage`、`/xng/status` 及本機 Bearer 驗證。Hub 固定本機 8890；狀態辨識與 XNG 自訂安裝由 Hub 負責。[integrations/gemini-hub](../integrations/gemini-hub) 提供獨立後端原始碼及部署教學；Setup 不安裝 Hub，執行時也不依賴此 Git 工作目錄。部署到自己的服務目錄後，移除靈動島不影響 Hub/XNG。一般 HUD 與個人提醒不需要呼叫模型。
+
+Hub 0.3.0 的 auto/search 文字請求先由 Gemini 理解意圖與上下文，形成公开查詢，再由既有 XNG 提供證據。普通聊天直接於第一輪回答；搜尋通常再用一輪 Gemini 整理。chat/web明確模式保留。時效問題強制查證，缺必要名稱先釐清；來源不足不補成最新事實。這是共用助手調度，沒有修改 XNG 搜尋算法或將其複製到前端。
 
 為維持升級相容，保留 `EndfieldChargePlus` 命名空間、EXE、互斥鎖、開機啟動識別與資料目錄。Windows Setup 使用固定 AppId，程式放在每使用者安裝目錄；升級及解除安裝不刪除個人資料。個人資料不會搬到 Git 工作目錄。
 

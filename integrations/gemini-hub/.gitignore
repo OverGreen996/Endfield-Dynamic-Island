@@ -1,0 +1,12 @@
+policy.json
+data/
+runtime/
+.runtime/
+_backups/
+.backups/
+*.sqlite*
+*.db*
+*.dpapi
+*.token
+.env*
+*.log

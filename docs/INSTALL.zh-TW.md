@@ -17,7 +17,7 @@ AI 使用 `127.0.0.1:8890` 的本機 Gemini Hub，驗證檔及工具在 Windows�
 
 AI 輸入框按 `Ctrl+V` 貼圖，預覽不呼叫模型，送出才判讀。聊天模式通常一次 Gemini；辨識後再搜尋並整理通常兩次。失敗請求也可能扣額度，以 Hub 帳本為準。
 
-[XNG-Plugin](https://github.com/OverGreen996/XNG-Plugin) 由每位使用者自行架設；公開站配送核心及規則，不使用開發者的私人主機。只安裝 XNG 不會补齊 Gemini Hub。此儲存庫尚未配送 Hub 一鍵安裝包，新電腦可先用 HUD、音樂、通知、提醒及記憶管理。
+[XNG-Plugin](https://github.com/OverGreen996/XNG-Plugin) 由每位使用者自行架設；公開站配送核心及規則，不使用開發者的私人主機。只安裝 XNG 不會補齊 Gemini Hub。本儲存庫已提供 [Hub 0.3.0 原始碼、更新及手動部署教學](../integrations/gemini-hub)，尚未配送 Hub 一鍵安裝包。自動模式先由 Gemini 理解，再交 XNG 找資料；一般聊天通常一次、搜尋通常兩次生成，均計次。只更新 Hub 即可沿用靈動島 v0.23.1。
 
 ## 更新及解除安裝
 

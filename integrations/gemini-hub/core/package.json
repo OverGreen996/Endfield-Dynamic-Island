@@ -1,0 +1,14 @@
+{
+  "name": "gemini-usage-hub",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "start": "node server.js",
+    "usage": "node cli.js usage"
+  }
+}
