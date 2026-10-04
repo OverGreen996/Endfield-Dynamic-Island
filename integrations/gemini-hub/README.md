@@ -37,6 +37,8 @@ New-Item -ItemType Directory data
 5. 執行 `Set-GeminiKey.ps1`，在本機隱藏欄位輸入自己的 API Key。確認自己專案是 Free 後，執行 `Confirm-GeminiFreeMode.ps1 -Confirmation Free`，再執行 `Start-GeminiHub.ps1`。金鑰以 Windows DPAPI 保存；不要貼到聊天、Git、網址或命令列參數。
 6. 執行 `Query-GeminiUsage.ps1` 核對狀態，再在靈動島使用 `Alt+A`。XNG 可放在旁邊的 `ChatGPT/XNG`，或使用 `%LocalAppData%/XNG` 的一鍵部署。Hub 會驗證安裝標記、服務歸屬與接口，不連開發者的電腦。
 
+附帶 `.cmd` 啟動器使用 Windows PowerShell，僅當次程序採 `RemoteSigned`，不更改永久政策；組織政策仍優先。從網路下載的腳本需在確認來源後依自己的系統規則處理。
+
 這是手動部署原始碼，沒有配送一鍵安裝器或 Node runtime。重新安裝 Windows 後需以自己的金鑰及新帳本重新部署；Windows DPAPI 私人檔不保證跨重灌可解密。
 
 ## API 與額度
