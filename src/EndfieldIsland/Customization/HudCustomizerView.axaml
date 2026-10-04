@@ -1,0 +1,427 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EndfieldChargePlus.Customization.HudCustomizerView">
+  <TabControl>
+    <TabItem Header="HUD 設定">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="4,12,4,18" Spacing="12">
+
+          <Border Background="#242426" BorderBrush="#343438" BorderThickness="1" CornerRadius="10" Padding="18,16">
+            <StackPanel Spacing="14">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="3" Margin="0,0,18,0">
+                  <TextBlock Text="方案管理" FontSize="14" FontWeight="SemiBold" Foreground="#C6CA4C"/>
+                  <TextBlock Text="選擇目前顯示方案。內建方案修改後會另存為新方案，原預設保持不變。" FontSize="12" Foreground="#85858B"/>
+                </StackPanel>
+                <Button x:Name="PreviewBtn" Grid.Column="1" Content="預覽目前方案" Height="38" MinWidth="124" Padding="16,7" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="#C6CA4C" Foreground="#171719" FontWeight="SemiBold" CornerRadius="7"/>
+              </Grid>
+
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="4" Margin="0,0,14,0">
+                  <TextBlock Text="目前方案" FontSize="11" Foreground="#85858B"/>
+                  <ComboBox x:Name="ProfileCombo" Height="36" MinWidth="520" HorizontalAlignment="Stretch"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Bottom">
+                  <Button x:Name="AddProfileBtn" Content="建立" Height="36" MinWidth="72" Padding="14,6" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                  <Button x:Name="SaveProfileBtn" Content="儲存" Height="36" MinWidth="72" Padding="14,6" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                  <Button x:Name="DeleteProfileBtn" Content="刪除" Height="36" MinWidth="72" Padding="14,6" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                </StackPanel>
+              </Grid>
+
+              <!-- Context options stay immediately below the scheme selector. -->
+              <Border x:Name="TimeOptionsPanel" Background="#1E1E20" CornerRadius="8" Padding="14" IsVisible="False">
+                <Grid ColumnDefinitions="*,Auto,240">
+                  <StackPanel Spacing="2" Margin="0,0,16,0">
+                    <TextBlock Text="目標時間模式" FontSize="12" Foreground="#E6E6E8"/>
+                    <TextBlock Text="關閉時顯示當天已過進度；開啟後顯示距離下一個每日目標時間的剩餘比例。" FontSize="11" Foreground="#77777D" TextWrapping="Wrap"/>
+                  </StackPanel>
+                  <ToggleSwitch x:Name="TimeTargetSwitch" Grid.Column="1" VerticalAlignment="Center" Margin="0,0,24,0"/>
+                  <StackPanel Grid.Column="2" Spacing="4">
+                    <TextBlock Text="每日目標時間" FontSize="11" Foreground="#85858B"/>
+                    <TextBox x:Name="TimeTargetBox" Watermark="10:00:00"/>
+                  </StackPanel>
+                </Grid>
+              </Border>
+
+              <Border x:Name="GpuOptionsPanel" Background="#1E1E20" CornerRadius="8" Padding="14" IsVisible="False">
+                <Grid ColumnDefinitions="*,420">
+                  <StackPanel Spacing="2" Margin="0,0,18,0">
+                    <TextBlock Text="GPU 裝置" FontSize="12" Foreground="#E6E6E8"/>
+                    <TextBlock Text="偵測到多個 GPU 時，選擇此方案要顯示的圖形處理器。" FontSize="11" Foreground="#77777D"/>
+                    <TextBlock x:Name="GpuAdapterStatusText" FontSize="11" Foreground="#6F6F74" Margin="0,3,0,0"/>
+                  </StackPanel>
+                  <ComboBox x:Name="GpuAdapterCombo" Grid.Column="1" Height="36" VerticalAlignment="Center"/>
+                </Grid>
+              </Border>
+
+              <Border x:Name="NetworkOptionsPanel" Background="#1E1E20" CornerRadius="8" Padding="14" IsVisible="False">
+                <StackPanel Spacing="12">
+                  <Grid ColumnDefinitions="*,320">
+                    <StackPanel Spacing="2" Margin="0,0,18,0">
+                      <TextBlock Text="網路顯示單位" FontSize="12" Foreground="#E6E6E8"/>
+                      <TextBlock Text="Mbps：按兆位元每秒顯示；KB/s / MB/s：根據速度大小自動切換。" FontSize="11" Foreground="#85858B" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <ComboBox x:Name="NetworkDisplayUnitCombo" Grid.Column="1" Height="36" VerticalAlignment="Center"/>
+                  </Grid>
+
+                  <Border Height="1" Background="#303034"/>
+
+                  <Grid ColumnDefinitions="*,320">
+                    <StackPanel Spacing="2" Margin="0,0,18,0">
+                      <TextBlock Text="百分比計算方式" FontSize="12" Foreground="#E6E6E8"/>
+                      <TextBlock Text="使用系統全部有效網路介面的流量。可按總傳輸速率、僅下載、僅上傳或上下載較大值計算右側百分比。" FontSize="11" Foreground="#85858B" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <ComboBox x:Name="NetworkPercentModeCombo" Grid.Column="1" Height="36" VerticalAlignment="Center"/>
+                  </Grid>
+
+                  <Border Height="1" Background="#303034"/>
+
+                  <Grid ColumnDefinitions="*,180,150">
+                    <StackPanel Spacing="2" Margin="0,0,18,0">
+                      <TextBlock Text="100% 對應網路速度" FontSize="12" Foreground="#E6E6E8"/>
+                      <TextBlock Text="目前所選百分比模式的速度達到這裡設定的值時顯示 100%；計算前統一換算為 Byte/s。" FontSize="11" Foreground="#85858B" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="4" Margin="0,0,8,0">
+                      <TextBlock Text="數值" FontSize="11" Foreground="#85858B"/>
+                      <NumericUpDown x:Name="NetworkReferenceValueBox" Minimum="0.001" Maximum="1000000" Increment="1" FormatString="0.###"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="4" Margin="8,0,0,0">
+                      <TextBlock Text="單位" FontSize="11" Foreground="#85858B"/>
+                      <ComboBox x:Name="NetworkReferenceUnitCombo" Height="36"/>
+                    </StackPanel>
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              <Border x:Name="PingOptionsPanel" Background="#1E1E20" CornerRadius="8" Padding="14" IsVisible="False">
+                <StackPanel Spacing="12">
+                  <Grid ColumnDefinitions="*,420">
+                    <StackPanel Spacing="2" Margin="0,0,18,0">
+                      <TextBlock Text="測試位址" FontSize="12" Foreground="#E6E6E8"/>
+                      <TextBlock Text="支援 IPv4、IPv6 或網域名稱。" FontSize="11" Foreground="#85858B" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <TextBox x:Name="PingTargetBox" Grid.Column="1" Watermark="例如：1.1.1.1、2606:4700:4700::1111 或 example.com" VerticalAlignment="Center"/>
+                  </Grid>
+
+                  <Border Height="1" Background="#303034"/>
+
+                  <Grid ColumnDefinitions="*,420">
+                    <StackPanel Spacing="2" Margin="0,0,18,0">
+                      <TextBlock Text="測試協定" FontSize="12" Foreground="#E6E6E8"/>
+                      <TextBlock Text="ICMP 使用標準 Ping；TCP 測量連接埠連線延遲；UDP 會傳送探測資料並等待目標服務回應。" FontSize="11" Foreground="#85858B" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <ComboBox x:Name="ProbeProtocolCombo" Grid.Column="1" Height="36" VerticalAlignment="Center"/>
+                  </Grid>
+
+                  <Border Height="1" Background="#303034"/>
+
+                  <Grid ColumnDefinitions="*,420">
+                    <StackPanel Spacing="2" Margin="0,0,18,0">
+                      <TextBlock Text="偵測連接埠" FontSize="12" Foreground="#E6E6E8"/>
+                      <TextBlock Text="TCP / UDP 使用該連接埠；ICMP 不使用連接埠。" FontSize="11" Foreground="#85858B" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <NumericUpDown x:Name="ProbePortBox" Grid.Column="1" Minimum="1" Maximum="65535" Increment="1" FormatString="0" VerticalAlignment="Center"/>
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              <Border Background="#1E1E20" CornerRadius="8" Padding="14">
+                <StackPanel Spacing="10">
+                  <Grid ColumnDefinitions="*,300">
+                    <StackPanel Spacing="4" Margin="0,0,8,0">
+                      <TextBlock Text="方案名稱" FontSize="11" Foreground="#85858B"/>
+                      <TextBox x:Name="ProfileNameBox" Watermark="例如：我的伺服器 - 線上狀態"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="4" Margin="8,0,0,0">
+                      <TextBlock Text="動畫模式" FontSize="12" Foreground="#85858B"/>
+                      <ComboBox x:Name="AnimationModeCombo" Height="36"/>
+                      <TextBlock Text="簡潔：直接展開最終 HUD，適合經常查看。" FontSize="13" Foreground="#C6CA4C" TextWrapping="Wrap" Margin="0,3,0,0"/>
+                      <TextBlock Text="完整：包含標題、波紋與外觀切換，再進入最終 HUD。" FontSize="13" Foreground="#C6CA4C" TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </Grid>
+
+                  <StackPanel Spacing="2">
+                    <TextBlock x:Name="ProfileKindText" Text="" FontSize="12" Foreground="#BDBDC2"/>
+                    <TextBlock Text="下拉選單中的方案即目前使用方案；始終保持一個方案被選中。" FontSize="11" Foreground="#6F6F74"/>
+                  </StackPanel>
+
+                  <Border x:Name="CycleOptionsPanel" Background="#19191B" BorderBrush="#303034" BorderThickness="1" CornerRadius="8" Padding="14">
+                    <StackPanel Spacing="12">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Spacing="2" Margin="0,0,18,0">
+                          <TextBlock Text="自動輪播" FontSize="12" FontWeight="SemiBold" Foreground="#E6E6E8"/>
+                          <TextBlock Text="開啟後按照下方輪播清單的順序迴圈切換方案。" FontSize="11" Foreground="#85858B"/>
+                        </StackPanel>
+                        <ToggleSwitch x:Name="AutoCycleSwitch" Grid.Column="1" VerticalAlignment="Center"/>
+                      </Grid>
+
+                      <Border Height="1" Background="#303034"/>
+
+                      <Grid ColumnDefinitions="*,160">
+                        <StackPanel Spacing="2" Margin="0,0,18,0">
+                          <TextBlock Text="輪播清單" FontSize="12" FontWeight="SemiBold" Foreground="#E6E6E8"/>
+                          <TextBlock Text="從上到下依次切換，到達末尾後回到第一項。佇列只引用目前存在的方案。" FontSize="11" Foreground="#85858B" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="4">
+                          <TextBlock Text="輪播間隔 / 秒" FontSize="11" Foreground="#85858B"/>
+                          <NumericUpDown x:Name="CycleSecondsBox" Minimum="3" Maximum="3600" Increment="1" Value="10"/>
+                        </StackPanel>
+                      </Grid>
+
+                      <StackPanel Spacing="5">
+                        <Grid ColumnDefinitions="Auto,140,*" VerticalAlignment="Center">
+                          <TextBlock Text="輪播動畫" FontSize="12" Foreground="#E6E6E8" VerticalAlignment="Center"/>
+                          <ComboBox x:Name="CycleAnimationModeCombo" Grid.Column="1" Height="36" Margin="14,0,0,0" VerticalAlignment="Center"/>
+                        </Grid>
+                        <TextBlock Text="開啟自動輪播後，以這裡的動畫為準，忽略各方案自身的動畫模式。" FontSize="11" Foreground="#85858B" TextWrapping="Wrap"/>
+                        <TextBlock Text="簡潔：收回上一項後，快速喚出下一項。" FontSize="12" Foreground="#C6CA4C" TextWrapping="Wrap"/>
+                        <TextBlock Text="完整：收回上一項後，以完整標題、波紋與形態動畫喚出下一項。" FontSize="12" Foreground="#C6CA4C" TextWrapping="Wrap"/>
+                      </StackPanel>
+
+                      <Border Height="1" Background="#303034"/>
+
+                      <Grid ColumnDefinitions="*,Auto">
+                        <ComboBox x:Name="CycleProfileSourceCombo" Height="36" Margin="0,0,10,0"/>
+                        <Button x:Name="CycleAddBtn" Grid.Column="1" Content="新增" Height="36" MinWidth="72" Padding="14,6" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                      </Grid>
+
+                      <Grid ColumnDefinitions="*,Auto">
+                        <Border BorderBrush="#343438" BorderThickness="1" CornerRadius="6" MinHeight="154" Margin="0,0,10,0">
+                          <ListBox x:Name="CycleProfileList" MinHeight="152" MaxHeight="220"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Top">
+                          <Button x:Name="CycleRemoveBtn" Content="刪除" Height="34" MinWidth="72" Padding="12,5" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                          <Button x:Name="CycleMoveUpBtn" Content="上移" Height="34" MinWidth="72" Padding="12,5" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                          <Button x:Name="CycleMoveDownBtn" Content="下移" Height="34" MinWidth="72" Padding="12,5" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                        </StackPanel>
+                      </Grid>
+                      <TextBlock x:Name="CycleQueueStatusText" Text="" FontSize="11" Foreground="#85858B" TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
+              </Border>
+
+              <TextBlock x:Name="ProfileStatusText" FontSize="12" Foreground="#A4A4AA" TextWrapping="Wrap"/>
+            </StackPanel>
+          </Border>
+
+          <Border Background="#242426" BorderBrush="#343438" BorderThickness="1" CornerRadius="10" Padding="18,16">
+            <StackPanel Spacing="16">
+              <StackPanel Spacing="3">
+                <TextBlock Text="顯示內容" FontSize="14" FontWeight="SemiBold" Foreground="#C6CA4C"/>
+                <TextBlock Text="左側顯示主要資訊，右側顯示百分比、進度或狀態類資料。" FontSize="11" Foreground="#85858B"/>
+              </StackPanel>
+
+              <StackPanel Spacing="8">
+                <TextBlock Text="標題階段" FontSize="12" FontWeight="SemiBold" Foreground="#B7B7BC"/>
+                <Grid ColumnDefinitions="*,*">
+                  <StackPanel Spacing="4" Margin="0,0,6,0">
+                    <TextBlock Text="上方標籤" FontSize="11" Foreground="#85858B"/>
+                    <TextBox x:Name="TaglineBox" Watermark="/// SYSTEM MONITOR"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Spacing="4" Margin="6,0,0,0">
+                    <TextBlock Text="主標題" FontSize="11" Foreground="#85858B"/>
+                    <TextBox x:Name="TitleBox" Watermark="系統狀態"/>
+                  </StackPanel>
+                </Grid>
+              </StackPanel>
+
+              <Border Background="#1E1E20" CornerRadius="8" Padding="14">
+                <StackPanel Spacing="9">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="左側主要資訊" FontSize="12" FontWeight="SemiBold" Foreground="#E6E6E8"/>
+                      <TextBlock Text="容量、目前頻率、速率、餘額、目前時間等主要資訊。" FontSize="11" Foreground="#77777D"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="PRIMARY" FontFamily="Consolas" FontSize="11" Foreground="#68686D" VerticalAlignment="Center"/>
+                  </Grid>
+                  <Grid ColumnDefinitions="*,*">
+                    <StackPanel Spacing="4" Margin="0,0,6,0">
+                      <TextBlock Text="主要數值" FontSize="11" Foreground="#85858B"/>
+                      <TextBox x:Name="PrimaryBox" AcceptsReturn="True" MinHeight="68" TextWrapping="Wrap" Watermark="{}{memory.used_bytes|gb:1}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="4" Margin="6,0,0,0">
+                      <TextBlock Text="次要數值 / 補充文字" FontSize="11" Foreground="#85858B"/>
+                      <TextBox x:Name="SecondaryBox" AcceptsReturn="True" MinHeight="68" TextWrapping="Wrap" Watermark="/{memory.total_bytes|gb:1} GB"/>
+                    </StackPanel>
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              <Border Background="#1E1E20" CornerRadius="8" Padding="14">
+                <StackPanel Spacing="9">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Spacing="2">
+                      <TextBlock Text="右側狀態數值" FontSize="12" FontWeight="SemiBold" Foreground="#E6E6E8"/>
+                      <TextBlock Text="使用率、剩餘比例、已過進度等狀態資訊，並可與圓環同步更新。" FontSize="11" Foreground="#77777D"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="STATUS" FontFamily="Consolas" FontSize="11" Foreground="#68686D" VerticalAlignment="Center"/>
+                  </Grid>
+                  <Grid ColumnDefinitions="*,150">
+                    <StackPanel Spacing="4" Margin="0,0,6,0">
+                      <TextBlock Text="狀態數值" FontSize="11" Foreground="#85858B"/>
+                      <TextBox x:Name="RightBox" AcceptsReturn="True" MinHeight="68" TextWrapping="Wrap" Watermark="{}{cpu.usage|0}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="4" Margin="6,0,0,0">
+                      <TextBlock Text="結尾文字" FontSize="11" Foreground="#85858B"/>
+                      <TextBox x:Name="RightSuffixBox" Watermark="%"/>
+                    </StackPanel>
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              <Border Background="#1E1E20" BorderBrush="#343438" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                <TextBlock FontSize="11" Foreground="#A4A4AA" TextWrapping="Wrap"
+                           Text="{}範本支援 {變數|格式}；進階運算式使用 {= 運算式 | 格式}，支援 + - * / % ^、比較、&amp;&amp; / || / !、?:、??、if()、min/max/avg/sum/clamp/round 等；進度變數也可填寫 = 運算式。例：{= if(memory.usage &gt;= 80, '高', '正常')}。"/>
+              </Border>
+            </StackPanel>
+          </Border>
+
+          <Border Background="#242426" BorderBrush="#343438" BorderThickness="1" CornerRadius="10" Padding="18,16">
+            <StackPanel Spacing="14">
+              <TextBlock Text="圖示與進度環" FontSize="14" FontWeight="SemiBold" Foreground="#C6CA4C"/>
+              <Grid ColumnDefinitions="*,120,120">
+                <StackPanel Spacing="4" Margin="0,0,8,0">
+                  <TextBlock Text="進度變數" FontSize="11" Foreground="#85858B"/>
+                  <TextBox x:Name="ProgressVariableBox" Watermark="cpu.usage 或 = (cpu.usage + gpu.usage) / 2"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="4" Margin="8,0">
+                  <TextBlock Text="最小值" FontSize="11" Foreground="#85858B"/>
+                  <NumericUpDown x:Name="ProgressMinBox" Minimum="-1000000000" Maximum="1000000000" Value="0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Spacing="4" Margin="8,0,0,0">
+                  <TextBlock Text="最大值" FontSize="11" Foreground="#85858B"/>
+                  <NumericUpDown x:Name="ProgressMaxBox" Minimum="-1000000000" Maximum="1000000000" Value="100"/>
+                </StackPanel>
+              </Grid>
+              <Grid ColumnDefinitions="*,*">
+                <StackPanel Spacing="4" Margin="0,0,6,0">
+                  <TextBlock Text="左側圖示" FontSize="11" Foreground="#85858B"/>
+                  <ComboBox x:Name="LeftIconCombo" Height="32"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="4" Margin="6,0,0,0">
+                  <TextBlock Text="右側圖示" FontSize="11" Foreground="#85858B"/>
+                  <ComboBox x:Name="RightIconCombo" Height="32"/>
+                </StackPanel>
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <Border Background="#242426" BorderBrush="#343438" BorderThickness="1" CornerRadius="10" Padding="18,16">
+            <StackPanel Spacing="12">
+              <TextBlock Text="顏色" FontSize="14" FontWeight="SemiBold" Foreground="#C6CA4C"/>
+              <Grid ColumnDefinitions="240,*">
+                <StackPanel Spacing="4" Margin="0,0,10,0">
+                  <TextBlock Text="預設強調色" FontSize="11" Foreground="#85858B"/>
+                  <TextBox x:Name="AccentColorBox" Watermark="#C6CA4C"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="4" Margin="10,0,0,0">
+                  <TextBlock Text="條件變色 · 每行：變數 運算子 數值 =&gt; 顏色" FontSize="11" Foreground="#85858B"/>
+                  <TextBox x:Name="ColorRulesBox" AcceptsReturn="True" MinHeight="72" TextWrapping="Wrap" Watermark="cpu.usage &gt;= 90 =&gt; #FF4D4F&#10;cpu.usage &gt;= 75 =&gt; #FFB84D"/>
+                </StackPanel>
+              </Grid>
+            </StackPanel>
+          </Border>
+
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+
+    <TabItem Header="變數庫">
+      <Grid ColumnDefinitions="390,*" Margin="4,12,4,4">
+        <Border Grid.Column="0" Background="#242426" BorderBrush="#343438" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,6,0">
+          <Grid RowDefinitions="Auto,Auto,Auto,*">
+            <StackPanel Spacing="3">
+              <TextBlock Text="變數庫" FontSize="14" FontWeight="SemiBold" Foreground="#C6CA4C"/>
+              <TextBlock Text="按功能分類；分類內優先顯示常用狀態與即時指標，再顯示詳細資訊。支援按名稱、變數名稱或分類查詢。" FontSize="11" Foreground="#85858B"/>
+            </StackPanel>
+            <TextBox x:Name="VariableSearchBox" Grid.Row="1" Watermark="搜尋：CPU 使用率 / cpu.usage" Margin="0,12,0,8"/>
+            <ComboBox x:Name="VariableCategoryCombo" Grid.Row="2" Height="36" MinWidth="260" HorizontalAlignment="Stretch" Margin="0,0,0,18"/>
+            <ListBox x:Name="VariableList" Grid.Row="3" MinHeight="430" Margin="0,4,0,0"/>
+          </Grid>
+        </Border>
+
+        <Border Grid.Column="1" Background="#242426" BorderBrush="#343438" BorderThickness="1" CornerRadius="10" Padding="20" Margin="6,0,0,0">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="16">
+              <StackPanel Spacing="4">
+                <TextBlock x:Name="VariableDetailName" Text="選擇一個變數" FontSize="18" FontWeight="SemiBold" Foreground="#F1F1F2"/>
+                <TextBlock x:Name="VariableDetailCategory" Text="" FontSize="11" Foreground="#C6CA4C"/>
+                <TextBlock x:Name="VariableDetailDescription" Text="從左側清單選擇變數後，這裡會顯示變數意義和使用建議。" FontSize="12" Foreground="#9B9BA1" TextWrapping="Wrap" Margin="0,4,0,0"/>
+              </StackPanel>
+
+              <Border Height="1" Background="#343438"/>
+
+              <StackPanel Spacing="5">
+                <TextBlock Text="變數名稱" FontSize="11" Foreground="#85858B"/>
+                <Grid ColumnDefinitions="*,110">
+                  <TextBox x:Name="VariableKeyBox" IsReadOnly="True" FontFamily="Consolas, Cascadia Mono, monospace"/>
+                  <Button x:Name="CopyVariableKeyBtn" Grid.Column="1" Content="複製變數名稱" Height="34" Padding="12,6" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="8,0,0,0"/>
+                </Grid>
+              </StackPanel>
+
+              <StackPanel Spacing="5">
+                <TextBlock Text="範本寫法" FontSize="11" Foreground="#85858B"/>
+                <Grid ColumnDefinitions="*,110">
+                  <TextBox x:Name="VariableTemplateBox" IsReadOnly="True" FontFamily="Consolas, Cascadia Mono, monospace"/>
+                  <Button x:Name="CopyVariableTemplateBtn" Grid.Column="1" Content="複製範本" Height="34" Padding="12,6" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="8,0,0,0"/>
+                </Grid>
+              </StackPanel>
+
+              <Grid ColumnDefinitions="*,*">
+                <Border Background="#1E1E20" CornerRadius="8" Padding="14" Margin="0,0,6,0">
+                  <StackPanel Spacing="7">
+                    <TextBlock Text="資料屬性" FontSize="12" FontWeight="SemiBold" Foreground="#DADADC"/>
+                    <Grid ColumnDefinitions="90,*">
+                      <TextBlock Text="型別" FontSize="11" Foreground="#77777D"/>
+                      <TextBlock x:Name="VariableTypeText" Grid.Column="1" FontSize="11" Foreground="#B8B8BD" TextWrapping="Wrap"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="90,*">
+                      <TextBlock Text="單位" FontSize="11" Foreground="#77777D"/>
+                      <TextBlock x:Name="VariableUnitText" Grid.Column="1" FontSize="11" Foreground="#B8B8BD" TextWrapping="Wrap"/>
+                    </Grid>
+                  </StackPanel>
+                </Border>
+                <Border Grid.Column="1" Background="#1E1E20" CornerRadius="8" Padding="14" Margin="6,0,0,0">
+                  <StackPanel Spacing="7">
+                    <TextBlock Text="使用建議" FontSize="12" FontWeight="SemiBold" Foreground="#DADADC"/>
+                    <TextBlock x:Name="VariableUseText" FontSize="11" Foreground="#B8B8BD" TextWrapping="Wrap"/>
+                  </StackPanel>
+                </Border>
+              </Grid>
+
+              <StackPanel Spacing="5">
+                <TextBlock Text="常用格式" FontSize="11" Foreground="#85858B"/>
+                <TextBlock x:Name="VariableFormatsText" FontSize="12" Foreground="#B8B8BD" TextWrapping="Wrap"/>
+              </StackPanel>
+            </StackPanel>
+          </ScrollViewer>
+        </Border>
+      </Grid>
+    </TabItem>
+
+    <!-- Hidden in this personal build; retain controls to preserve existing HTTP settings. -->
+    <TabItem x:Name="ExternalDataTab" Header="外部資料" IsVisible="False" IsEnabled="False" Focusable="False">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="4,12,4,18" Spacing="12">
+          <Border Background="#242426" BorderBrush="#343438" BorderThickness="1" CornerRadius="10" Padding="18">
+            <StackPanel Spacing="12">
+              <TextBlock Text="外部資料串接（HTTP / JSON）" FontSize="14" FontWeight="SemiBold" Foreground="#C6CA4C" TextWrapping="Wrap"/>
+              <TextBlock Text="把網站或伺服器提供的資料顯示在 HUD，例如線上人數、服務狀態或其他數字。" FontSize="13" Foreground="#D2D2D6" TextWrapping="Wrap"/>
+              <TextBlock Text="這是選用功能。CPU、GPU、記憶體、時間等內建資訊不需要設定這一頁。" FontSize="13" Foreground="#C6CA4C" TextWrapping="Wrap"/>
+              <TextBlock Text="不是 AI 聊天或翻譯設定，也不是貼上一般網頁網址就能自動讀取內容。" FontSize="13" Foreground="#D2D2D6" TextWrapping="Wrap"/>
+              <TextBlock Text="有 API 才需要設定：填入 API 網址 → 指定要讀的欄位 → 在 HUD 套用對應變數。" FontSize="13" Foreground="#D2D2D6" TextWrapping="Wrap"/>
+              <Expander x:Name="HttpAdvancedExpander" Header="進階設定與範例（JSON）" IsExpanded="False" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                <StackPanel Spacing="10" Margin="0,10,0,0">
+                  <TextBlock Text="下方範例預設停用；以 // 開頭的行都是說明，不會連線。沒有需求就維持原樣。" FontSize="12" Foreground="#A4A4AA" TextWrapping="Wrap"/>
+                  <TextBox x:Name="HttpSourcesJsonBox" AcceptsReturn="True" MinHeight="300" MaxHeight="460" FontFamily="Consolas, Cascadia Mono, monospace" FontSize="12" TextWrapping="NoWrap" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                </StackPanel>
+              </Expander>
+              <TextBlock x:Name="HttpStatusText" FontSize="12" Foreground="#C6CA4C" TextWrapping="Wrap"/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+    </TabItem>
+  </TabControl>
+</UserControl>

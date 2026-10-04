@@ -1,0 +1,65 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="EndfieldChargePlus.Views.TrayMenuWindow"
+        Width="240" Height="215"
+        ShowInTaskbar="False"
+        Topmost="True"
+        Background="Transparent"
+        SystemDecorations="None"
+        CanResize="False"
+        Focusable="True">
+  <Border CornerRadius="10"
+          Background="#1E1E20"
+          Padding="6"
+          BorderThickness="1"
+          BorderBrush="#2A2A2C">
+    <StackPanel Spacing="2" VerticalAlignment="Center">
+      <Border x:Name="MenuAssistant" Height="36" CornerRadius="6" Padding="12,0" Cursor="Hand" Background="Transparent">
+        <TextBlock x:Name="MenuAssistantText" Text="AI 靈動島   Alt+A" FontSize="13" VerticalAlignment="Center" Foreground="#C6CA4C"/>
+      </Border>
+      <Border x:Name="MenuMusic" Height="36" CornerRadius="6" Padding="12,0" Cursor="Hand" Background="Transparent">
+        <TextBlock x:Name="MenuMusicText" Text="音樂靈動島   Alt+M" FontSize="13" VerticalAlignment="Center" Foreground="#66D5A4"/>
+      </Border>
+      <Border x:Name="MenuPreview"
+              Height="36"
+              CornerRadius="6"
+              Padding="12,0"
+              Cursor="Hand"
+              Background="Transparent">
+        <TextBlock x:Name="MenuPreviewText"
+                   Text="預覽 HUD"
+                   FontSize="13"
+                   VerticalAlignment="Center"
+                   Foreground="#E8E8E8"/>
+      </Border>
+
+      <Border x:Name="MenuSettings"
+              Height="36"
+              CornerRadius="6"
+              Padding="12,0"
+              Cursor="Hand"
+              Background="Transparent">
+        <TextBlock x:Name="MenuSettingsText"
+                   Text="設定"
+                   FontSize="13"
+                   VerticalAlignment="Center"
+                   Foreground="#E8E8E8"/>
+      </Border>
+
+      <Border Height="1" Background="#2A2A2C" Margin="8,4"/>
+
+      <Border x:Name="MenuExit"
+              Height="36"
+              CornerRadius="6"
+              Padding="12,0"
+              Cursor="Hand"
+              Background="Transparent">
+        <TextBlock x:Name="MenuExitText"
+                   Text="結束程式"
+                   FontSize="13"
+                   VerticalAlignment="Center"
+                   Foreground="#E8E8E8"/>
+      </Border>
+    </StackPanel>
+  </Border>
+</Window>

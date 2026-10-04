@@ -1,0 +1,98 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="EndfieldChargePlus.Views.AssistantIslandWindow"
+        Title="Endfield AI 靈動島" Width="436" Height="140"
+        SystemDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent" Topmost="True"
+        ShowInTaskbar="True" ShowActivated="True" Focusable="True" CanResize="False"
+        WindowStartupLocation="Manual">
+  <Window.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceInclude Source="avares://EndfieldChargePlus/Styles/EndfieldBrand.axaml"/></ResourceDictionary.MergedDictionaries></ResourceDictionary></Window.Resources>
+  <Grid>
+  <Border x:Name="CloseSurface" IsVisible="False" IsHitTestVisible="False"
+          HorizontalAlignment="Center" VerticalAlignment="Top" Margin="8"/>
+  <Border x:Name="Island" Margin="8" CornerRadius="24"
+          Background="#FA191D1D" BorderBrush="#727777" BorderThickness="1"
+          Padding="14,12" ClipToBounds="True">
+    <Border.ContextMenu>
+      <ContextMenu>
+        <MenuItem x:Name="NewConversationItem" Header="新對話"/>
+        <MenuItem x:Name="MemoryPalaceItem" Header="記憶宮殿／定時提醒"/>
+        <MenuItem x:Name="UsageItem" Header="查詢 Gemini 用量"/>
+        <MenuItem x:Name="XngStatusItem" Header="查詢 XNG 插件版本"/>
+        <MenuItem x:Name="XngManagerItem" Header="管理 XNG 插件／來源規則"/>
+        <MenuItem x:Name="MusicItem" Header="音樂播放"/>
+        <MenuItem x:Name="HideItem" Header="收起靈動島"/>
+      </ContextMenu>
+    </Border.ContextMenu>
+    <Grid x:Name="AssistantContent" RowDefinitions="Auto,*,Auto,Auto">
+      <Border CornerRadius="3" Background="#3A3D3D" BorderBrush="#626868" BorderThickness="0,1,0,1">
+        <Grid x:Name="BodyHeader" ColumnDefinitions="4,36,*,Auto" Background="Transparent" Cursor="Hand" MinHeight="32">
+          <Border Background="#13C8EB"/>
+          <PathIcon x:Name="EndfieldBrandMark" Grid.Column="1" Width="28" Height="28" Foreground="#F1F0EE" Data="{DynamicResource Geo.Endfield.Icon.zh}" IsHitTestVisible="False"/>
+          <StackPanel Grid.Column="2" Spacing="1" Margin="4,5,10,5">
+            <TextBlock Text="ENDFIELD / AI" FontSize="10" LetterSpacing="1.2" Foreground="#F1F0EE" TextTrimming="CharacterEllipsis"/>
+            <TextBlock Text="點標頭收起 · 右鍵新對話" FontSize="9" Foreground="#C8CCCC" TextTrimming="CharacterEllipsis"/>
+          </StackPanel>
+          <Grid Grid.Column="3" RowDefinitions="*,4" Margin="8,0,0,0" IsHitTestVisible="False">
+            <Viewbox x:Name="HeaderArtwork" Width="148" Height="32" Stretch="Fill">
+              <Canvas Width="190" Height="40">
+                <Rectangle Width="142" Height="40" Fill="#13C8EB"/>
+                <Rectangle Canvas.Left="142" Width="48" Height="40" Fill="#C8CECC"/>
+                <Path Fill="#3A3D3D" Data="M 0,0 H 12 V 10 H 0 Z M 12,10 H 24 V 20 H 12 Z M 0,30 H 12 V 40 H 0 Z"/>
+                <Path Fill="#009CDC" Data="M 46,3 H 65 V 7 H 54 L 65,18 L 61,22 L 50,11 V 21 H 46 Z"/>
+                <Path Fill="#278BA0" Data="M 73,7 H 75 V 9 H 73 Z M 83,7 H 85 V 9 H 83 Z M 73,17 H 75 V 19 H 73 Z M 83,17 H 85 V 19 H 83 Z M 73,27 H 75 V 29 H 73 Z M 83,27 H 85 V 29 H 83 Z M 73,36 H 75 V 38 H 73 Z M 83,36 H 85 V 38 H 83 Z"/>
+                <Ellipse Canvas.Left="91" Canvas.Top="4" Width="17" Height="17" Fill="#354343"/>
+                <Path Fill="#354343" Data="M 86,33 C 87,25 92,20 99,20 C 106,20 111,25 112,33 Z M 85,35 H 113 V 37 H 85 Z M 85,39 H 113 V 40 H 85 Z"/>
+                <Ellipse Canvas.Left="115" Canvas.Top="4" Width="17" Height="17" Stroke="#354343" StrokeThickness="2"/>
+                <Path Stroke="#354343" StrokeThickness="2" Data="M 111,38 C 111,27 116,21 123,21 C 130,21 135,27 135,38 M 116,36 H 118 M 129,36 H 131"/>
+                <Path Stroke="#ECEFED" StrokeThickness="1" Data="M 138,0 V 40 M 140,0 V 40 M 145,0 V 40 M 148,0 V 40 M 151,0 V 40"/>
+                <Path Stroke="#737C7A" StrokeThickness="1" Data="M 166,3 H 174 M 170,0 V 6 M 166,36 H 174 M 170,33 V 40 M 169,10 H 177 M 169,12 H 177 M 169,14 H 177 M 169,16 H 177 M 169,18 H 177 M 169,20 H 177 M 169,22 H 177 M 169,24 H 177 M 169,26 H 177 M 169,28 H 177"/>
+              </Canvas>
+            </Viewbox>
+            <Grid Grid.Row="1" ColumnDefinitions="*,*,*" Margin="8,2,6,0">
+              <Border Background="#DB46DC" Height="1" Margin="0,0,3,0"/>
+              <Border Grid.Column="1" Background="#D7D93B" Height="1" Margin="0,0,3,0"/>
+              <Border Grid.Column="2" Background="#13C8EB" Height="1"/>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Border>
+      <Border x:Name="ConversationFrame" Grid.Row="1" Margin="0,10,0,0" IsVisible="False" BorderBrush="#646B6B" BorderThickness="1"
+              CornerRadius="3" Background="#191D1D" Padding="10,12">
+       <ScrollViewer x:Name="ReplyScroll" IsVisible="False" MaxHeight="450"
+                    HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <StackPanel x:Name="ConversationPanel" Spacing="14" Margin="0,0,20,0"/>
+       </ScrollViewer>
+      </Border>
+      <TextBox x:Name="InputBox" Grid.Row="2" Margin="0,10,0,0" Watermark="輸入訊息… Enter 送出"
+               AcceptsReturn="True" TextWrapping="Wrap" MaxLength="16000"
+               MinHeight="38" MaxHeight="180" FontSize="15" Foreground="#202424"
+               Background="#F1F0EE" BorderBrush="#D2D4D1" CornerRadius="18" Padding="14,8"
+               CaretBrush="#202424" SelectionBrush="#8EE8F8" SelectionForegroundBrush="#202424">
+        <TextBox.Resources>
+          <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#F1F0EE"/>
+          <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#F1F0EE"/>
+          <SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="#D5D9D7"/>
+          <SolidColorBrush x:Key="TextControlForegroundFocused" Color="#202424"/>
+          <SolidColorBrush x:Key="TextControlForegroundPointerOver" Color="#202424"/>
+          <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#248094"/>
+          <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#768484"/>
+          <SolidColorBrush x:Key="TextControlPlaceholderForegroundFocused" Color="#586262"/>
+          <SolidColorBrush x:Key="TextControlPlaceholderForegroundPointerOver" Color="#586262"/>
+        </TextBox.Resources>
+      </TextBox>
+      <Grid x:Name="FooterGrid" Grid.Row="3" Margin="0,10,0,0" ColumnDefinitions="*,Auto,Auto">
+        <TextBlock x:Name="StatusText" Text="Alt+A 喚出 · Shift+Enter 換行" FontSize="10"
+                   Foreground="#ABA99A" TextWrapping="Wrap" MaxLines="3" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding #StatusText.Text}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+        <ComboBox x:Name="ModeCombo" Grid.Column="1" SelectedIndex="0" MinHeight="28" FontSize="11" Width="96">
+          <ComboBoxItem Content="自動"/>
+          <ComboBoxItem Content="只聊天"/>
+          <ComboBoxItem Content="只搜尋"/>
+          <ComboBoxItem Content="搜尋＋AI"/>
+        </ComboBox>
+        <Button x:Name="SendButton" Grid.Column="2" Content="送出" MinHeight="28" FontSize="11"
+                Background="#C6CA4C" Foreground="#1E1E1E" Padding="12,4" Margin="6,0,0,0"/>
+      </Grid>
+    </Grid>
+  </Border>
+  </Grid>
+</Window>

@@ -1,0 +1,23 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ x:Class="EndfieldChargePlus.Views.NotificationIslandWindow" Title="Windows 通知靈動島"
+ Width="560" Height="136" SystemDecorations="None" Background="Transparent"
+ TransparencyLevelHint="Transparent" Topmost="True" ShowInTaskbar="False" ShowActivated="False" CanResize="False">
+ <Border x:Name="Island" Margin="8" CornerRadius="60" Background="#312F30" BorderThickness="0" ClipToBounds="True">
+  <Grid>
+   <Border CornerRadius="60" BorderBrush="#444744" BorderThickness="0.5" IsHitTestVisible="False"/>
+   <Path x:Name="EdgeAccent" Width="60" Height="60" HorizontalAlignment="Right" VerticalAlignment="Bottom" Data="M 59.75,0 A 59.75,59.75 0 0 1 0,59.75 L 0,56.25 A 56.25,56.25 0 0 0 56.25,0 Z" Fill="#EAEF24" IsHitTestVisible="False"/>
+  <Grid ColumnDefinitions="Auto,*" Margin="24,12,28,12">
+   <Border Width="42" Height="42" CornerRadius="14" Background="#202320" VerticalAlignment="Center">
+    <PathIcon Width="21" Height="23" Foreground="#EAEF24" Data="M 12,2 C 7,2 4,6 4,12 L 4,18 L 1,21 L 23,21 L 20,18 L 20,12 C 20,6 17,2 12,2 Z M 9,24 C 9,28 15,28 15,24 Z"/>
+   </Border>
+   <StackPanel Grid.Column="1" Margin="14,0,12,0" Spacing="4" VerticalAlignment="Center">
+    <Grid ColumnDefinitions="*,Auto"><TextBlock x:Name="AppLabel" FontSize="11" Foreground="#CED350" TextTrimming="CharacterEllipsis"/><TextBlock x:Name="TimeLabel" Grid.Column="1" FontSize="11" Foreground="#A1AAA1" Margin="8,0,0,0" MaxWidth="128" TextTrimming="CharacterEllipsis"/></Grid>
+    <TextBlock x:Name="TitleLabel" FontSize="15" FontWeight="SemiBold" Foreground="#F0F1ED" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+    <ScrollViewer x:Name="BodyScroll" Height="34" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
+     <TextBlock x:Name="BodyLabel" FontSize="12" Foreground="#ABB2AA" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2"/>
+    </ScrollViewer>
+   </StackPanel>
+  </Grid>
+  </Grid>
+ </Border>
+</Window>

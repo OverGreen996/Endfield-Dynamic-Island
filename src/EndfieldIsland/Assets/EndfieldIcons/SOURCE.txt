@@ -1,0 +1,6 @@
+Yue-plus/endfield_icons
+https://github.com/Yue-plus/endfield_icons
+Commit: 2e8d430fb505a427ffbeb4a3d22aeb943e475302
+MIT license (c) 2023 Yue_plus
+Original SVG path data preserved. Native Avalonia geometry uses SVG even-odd fill rule.
+Main Settings mark: original endfield-industries.svg; paths, polygons and rectangles preserved as native geometry.

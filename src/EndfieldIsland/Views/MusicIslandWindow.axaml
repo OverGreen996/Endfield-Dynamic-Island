@@ -1,0 +1,43 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ x:Class="EndfieldChargePlus.Views.MusicIslandWindow" Title="音樂靈動島" Width="820" Height="154"
+ SystemDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent" Topmost="True"
+ ShowInTaskbar="False" ShowActivated="False" CanResize="False">
+ <Window.Styles>
+  <Style Selector="Button"><Setter Property="Background" Value="Transparent"/><Setter Property="Foreground" Value="#E5E7E5"/><Setter Property="CornerRadius" Value="24"/><Setter Property="Padding" Value="0"/><Setter Property="BorderThickness" Value="0"/><Setter Property="Cursor" Value="Hand"/></Style>
+  <Style Selector="Button:pointerover /template/ ContentPresenter"><Setter Property="Background" Value="#24FFFFFF"/></Style>
+  <Style Selector="Button:pressed /template/ ContentPresenter"><Setter Property="Background" Value="#40FFFFFF"/></Style>
+  <Style Selector="Button:focus-visible /template/ ContentPresenter"><Setter Property="BorderBrush" Value="#DDDF63"/><Setter Property="BorderThickness" Value="1"/></Style>
+  <Style Selector="Slider#Progress /template/ Thumb"><Setter Property="Width" Value="8"/><Setter Property="Height" Value="8"/><Setter Property="Opacity" Value="0"/></Style>
+  <Style Selector="Slider#Progress:pointerover /template/ Thumb"><Setter Property="Opacity" Value="1"/></Style>
+ </Window.Styles>
+ <Grid RowDefinitions="*,26">
+  <Border x:Name="Island" Margin="8,8,8,0" CornerRadius="60" Background="#312F30" BorderThickness="0" ClipToBounds="True">
+   <Grid>
+    <Path x:Name="EdgeAccent" Width="60" Height="120" HorizontalAlignment="Right" VerticalAlignment="Center" Data="M 59.75,60 A 59.75,59.75 0 0 1 0,119.75 L 0,116.25 A 56.25,56.25 0 0 0 56.25,60 Z" Fill="#EAEF24" IsHitTestVisible="False"/>
+    <Grid x:Name="ContentGrid" ColumnDefinitions="Auto,*,Auto,Auto" Margin="24,14,18,14">
+     <Button x:Name="OpenPlaylist" Width="88" Height="88" CornerRadius="18" AutomationProperties.Name="啟動指定背景播放清單" ToolTip.Tip="點封面啟動指定清單；右鍵可設定清單">
+      <Border CornerRadius="18" ClipToBounds="True" Background="#252727"><Grid><PathIcon Width="30" Height="30" Foreground="#AFB3B1" Data="M 9,2 L 27,0 L 27,21 C 27,28 16,29 16,23 C 16,20 21,17 24,19 L 24,5 L 12,7 L 12,25 C 12,32 1,33 1,27 C 1,24 6,21 9,23 Z"/><Image x:Name="Cover" Stretch="UniformToFill"/></Grid></Border>
+     </Button>
+     <Grid x:Name="Header" Grid.Column="1" RowDefinitions="Auto,Auto,*" Margin="20,4,24,4" Background="Transparent" Cursor="Hand" ToolTip.Tip="點曲名區收起 · 右鍵設定播放清單">
+      <TextBlock x:Name="SongTitle" Text="點封面啟動播放清單" Foreground="#F0F0EC" FontSize="18" FontWeight="Medium" TextTrimming="CharacterEllipsis"/>
+      <TextBlock x:Name="Artist" Grid.Row="1" Text="YouTube / 背景音樂" Foreground="#ADB0AD" FontSize="13" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
+      <Grid Grid.Row="2" ColumnDefinitions="44,*,54" VerticalAlignment="Bottom"><TextBlock x:Name="Elapsed" Text="--:--" FontSize="12" Foreground="#ADAFAD" VerticalAlignment="Center"/><Border Grid.Column="1" Background="#515654" Height="4" CornerRadius="2" VerticalAlignment="Center" ClipToBounds="True" IsHitTestVisible="False"><Border x:Name="ProgressFill" HorizontalAlignment="Left" Background="#E6E8E4" CornerRadius="2"/></Border><Slider Grid.Column="1" Opacity="0" x:Name="Progress" Minimum="0" Maximum="1" Height="24" VerticalAlignment="Center" Foreground="#E6E8E4" Background="#515654" AutomationProperties.Name="播放進度"/><TextBlock x:Name="Remaining" Grid.Column="2" Text="--:--" FontSize="12" Foreground="#ADAFAD" VerticalAlignment="Center" HorizontalAlignment="Right"/></Grid>
+     </Grid>
+     <Grid Grid.Column="2" VerticalAlignment="Center">
+      <Border x:Name="ControlsCapsule" BorderThickness="0" Background="Transparent" Padding="8,8">
+       <StackPanel x:Name="Transport" Orientation="Horizontal" Spacing="8">
+        <Button x:Name="Shuffle" Width="44" Height="44" AutomationProperties.Name="隨機播放" ToolTip.Tip="隨機播放"><Path Width="23" Height="23" Stretch="Uniform" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2.2" StrokeLineCap="Round" StrokeJoin="Round" Data="M 2,6 L 6,6 C 11,6 12,18 17,18 L 22,18 M 18,14 L 22,18 L 18,22 M 2,18 L 6,18 C 11,18 12,6 17,6 L 22,6 M 18,2 L 22,6 L 18,10"/></Button>
+        <Button x:Name="Previous" Width="44" Height="44" AutomationProperties.Name="上一首" ToolTip.Tip="上一首"><PathIcon Width="19" Height="21" Data="M 0,0 L 3,0 L 3,21 L 0,21 Z M 19,0 L 5,10.5 L 19,21 Z"/></Button>
+        <Button x:Name="PlayPause" Width="44" Height="44" AutomationProperties.Name="播放或暫停" ToolTip.Tip="播放／暫停"><Border x:Name="PlayRing" BorderThickness="0" Width="44" Height="44"><PathIcon x:Name="PlayGlyph" Width="24" Height="30" Data="M 2,0 L 18,11 L 2,22 Z"/></Border></Button>
+        <Button x:Name="Next" Width="44" Height="44" AutomationProperties.Name="下一首" ToolTip.Tip="下一首"><PathIcon Width="19" Height="21" Data="M 16,0 L 19,0 L 19,21 L 16,21 Z M 0,0 L 14,10.5 L 0,21 Z"/></Button>
+        <Button x:Name="Repeat" Width="44" Height="44" AutomationProperties.Name="重播" ToolTip.Tip="重播：關／清單／單曲"><Grid><Path Width="23" Height="23" Stretch="Uniform" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2.2" StrokeLineCap="Round" StrokeJoin="Round" Data="M 3,10 C 3,6 6,4 10,4 L 20,4 M 17,1 L 20,4 L 17,7 M 21,14 C 21,18 18,20 14,20 L 4,20 M 7,17 L 4,20 L 7,23"/><TextBlock x:Name="RepeatSingle" IsVisible="False" Text="1" Foreground="#E7EB41" FontSize="10" HorizontalAlignment="Center" VerticalAlignment="Center"/></Grid></Button>
+       </StackPanel>
+      </Border>
+     </Grid>
+     <Button x:Name="SettingsButton" Grid.Column="3" Width="68" Height="88" Margin="14,0,0,0" AutomationProperties.Name="音樂清單設定" ToolTip.Tip="播放清單設定"><StackPanel Spacing="4"><PathIcon Width="36" Height="36" Foreground="#080A09" Data="M 1,28 L 21,6 L 33,4 L 10,29 Z M 13,33 L 32,12 L 36,13 L 20,34 Z M 4,5 L 10,10 L 9,13 L 3,10 Z"/><TextBlock Text="ENDFIELD" FontSize="9" FontWeight="Bold" Foreground="#101210" LetterSpacing="1" HorizontalAlignment="Center"/></StackPanel></Button>
+    </Grid>
+   </Grid>
+  </Border>
+  <Grid Grid.Row="1" IsVisible="False" Margin="22,5,20,0" ColumnDefinitions="Auto,*"><TextBlock Text="01 / STANDARD" Foreground="#A0A49E" FontSize="10" LetterSpacing="2"/><TextBlock x:Name="Notice" Grid.Column="1" Text="Alt+M · 右鍵設定清單" Foreground="#ACB0A8" FontSize="10" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" MaxWidth="450"/></Grid>
+ </Grid>
+</Window>

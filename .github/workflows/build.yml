@@ -1,0 +1,33 @@
+name: Windows build and isolated checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build both projects
+        shell: pwsh
+        run: |
+          dotnet build src/EndfieldIsland/EndfieldChargePlus.csproj -c Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build src/MusicPlayerHost/MusicPlayerHost.csproj -c Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build tests/IslandRegression/IslandRegression.csproj -c Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Isolated business checks (no model or private services)
+        shell: pwsh
+        run: |
+          $dll='tests/IslandRegression/bin/Release/net8.0-windows10.0.19041.0/IslandRegression.dll'
+          foreach ($flag in @('--unit','--music-unit','--notification-unit','--personal-unit')) {
+            dotnet $dll $flag
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
