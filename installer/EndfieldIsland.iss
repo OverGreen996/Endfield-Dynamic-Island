@@ -2,7 +2,7 @@
   #error PayloadDir must point to the self-contained publish directory.
 #endif
 #ifndef AppVersion
-  #define AppVersion "0.23.0"
+  #define AppVersion "0.23.1"
 #endif
 #ifndef OutputDir
   #define OutputDir "..\artifacts\installer"

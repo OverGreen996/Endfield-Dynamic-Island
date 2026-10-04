@@ -16,7 +16,7 @@ A Windows desktop island for AI conversations, music, notifications and system t
 
 ## Install
 
-Download `Endfield-Dynamic-Island-Setup-v0.23.0-win-x64.exe` from Releases. Exit the previous app from its tray menu and run Setup. It installs for the current user without administrator rights. Open from the desktop or Start menu; uninstall through Windows Installed apps. The executable and internal IDs retain their previous names for upgrade compatibility; the visible product name is Endfield Dynamic Island.
+Download `Endfield-Dynamic-Island-Setup-v0.23.1-win-x64.exe` from Releases. Exit the previous app from its tray menu and run Setup. It installs for the current user without administrator rights. Open from the desktop or Start menu; uninstall through Windows Installed apps. The executable and internal IDs retain their previous names for upgrade compatibility; the visible product name is Endfield Dynamic Island.
 
 Setup includes the .NET runtime and music host. Upgrades and uninstall preserve user data. Portable packages are no longer distributed. YouTube playlist playback additionally requires Microsoft Edge WebView2 Runtime. Enable notification access in Settings. Add your own playlist; the distribution contains no personal playlist.
 
@@ -26,7 +26,7 @@ Chats, reminders and memories are encrypted for the current Windows user. This r
 
 ## Build and test
 
-Ctrl+V pastes a removable image preview; only sending calls Gemini. Auto or Search + AI can research the identified subject through XNG. Images are not persisted, forwarded to XNG or used for memories. This is image understanding, not image generation. Compatible Gemini Hub 0.2.0 or newer is required for image input and model-assisted personal memory. Explicit original statements are validated locally; jokes, hypotheticals, third-party and sensitive details are not automatically saved. Classification shares the existing answer call.
+Ctrl+V pastes a removable image preview; only sending calls Gemini. Auto or Search + AI can research the identified subject through XNG. Images are not persisted, forwarded to XNG or used for memories. This is image understanding, not image generation. Gemini Hub 0.2.1 or newer is recommended for mandatory structured memory decisions; image input remains compatible with 0.2.0. Explicit original statements are validated locally; jokes, hypotheticals, third-party and sensitive details are not automatically saved. Classification shares the existing answer call.
 
 On Windows with .NET 8 SDK and Inno Setup 7.1 or newer:
 

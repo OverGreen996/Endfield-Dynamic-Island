@@ -1,6 +1,6 @@
 # 安裝「終末地 靈動島」
 
-1. 到 [GitHub Releases](https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest) 下載 `Endfield-Dynamic-Island-Setup-v0.23.0-win-x64.exe`。另有 SHA256 可核對完整性。
+1. 到 [GitHub Releases](https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest) 下載 `Endfield-Dynamic-Island-Setup-v0.23.1-win-x64.exe`。另有 SHA256 可核對完整性。
 2. 從系統匣退出舊版，執行 Setup，選擇繁體中文或 English。
 3. 預設安裝到 `%LocalAppData%\Programs\EndfieldDynamicIsland`，可更換位置。安裝至目前使用者，不需要管理員權限。
 4. 選擇桌面捷徑，核對位置後安裝。從桌面或開始功能表開啟。
@@ -13,7 +13,7 @@
 
 安裝包包含前端、.NET runtime 及播放器，**不包含 XNG、Gemini Hub、金鑰或私人設定**。
 
-AI 使用 `127.0.0.1:8890` 的本機 Gemini Hub，驗證檔及工具在 Windows「文件」的 `ChatGPT/GeminiHub`。服務缺少或用量鎖定時會显示原因，沒有付費備援。貼圖與模型輔助記憶需相容的 Hub 0.2.0 或更新版本。
+AI 使用 `127.0.0.1:8890` 的本機 Gemini Hub，驗證檔及工具在 Windows「文件」的 `ChatGPT/GeminiHub`。服務缺少或用量鎖定時會顯示原因，沒有付費備援。建議 Hub 0.2.1 或更新版本，使用必填的結構化記憶判斷；貼圖仍相容 0.2.0。Hub 與靈動島需各自更新，安裝靈動島不會自動更新 Hub。
 
 AI 輸入框按 `Ctrl+V` 貼圖，預覽不呼叫模型，送出才判讀。聊天模式通常一次 Gemini；辨識後再搜尋並整理通常兩次。失敗請求也可能扣額度，以 Hub 帳本為準。
 

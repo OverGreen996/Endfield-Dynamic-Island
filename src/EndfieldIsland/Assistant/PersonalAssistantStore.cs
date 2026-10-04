@@ -15,7 +15,10 @@ public sealed record LocalAssistantResult(string Text, string? SavedMemory = nul
 /// <summary>Explicit local actions and conservative first-person memory; never extracts from model/web replies.</summary>
 public sealed class PersonalAssistantStore
 {
-    public static PersonalAssistantStore Shared { get; } = new();
+    // Load the existing encrypted file only after every static dependency is initialized.
+    // Eager construction here ran before Entropy/Categories and incorrectly locked valid files.
+    private static readonly Lazy<PersonalAssistantStore> SharedStore = new(() => new());
+    public static PersonalAssistantStore Shared => SharedStore.Value;
     public static readonly string[] Categories = ["身分資料", "喜好偏好", "回答方式", "互動禁忌", "生活習慣", "個人事項", "目標計畫"];
     private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("EndfieldChargePlus.Personal.v1");
     private readonly string _path;

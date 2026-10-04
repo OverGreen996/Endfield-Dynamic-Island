@@ -10,7 +10,7 @@
 <p align="center">
   <img alt="Windows 10 / 11" src="https://img.shields.io/badge/Windows-10%20%2F%2011-13C8EB?style=flat-square">
   <img alt=".NET 8" src="https://img.shields.io/badge/.NET-8-323736?style=flat-square">
-  <img alt="v0.23.0" src="https://img.shields.io/badge/release-v0.23.0-E6E744?style=flat-square">
+  <img alt="v0.23.1" src="https://img.shields.io/badge/release-v0.23.1-E6E744?style=flat-square">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-323736?style=flat-square">
 </p>
 
@@ -29,7 +29,7 @@
 
 ## 先下載，後設定
 
-1. 到 [Releases](https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest) 下載 `Endfield-Dynamic-Island-Setup-v0.23.0-win-x64.exe`。
+1. 到 [Releases](https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest) 下載 `Endfield-Dynamic-Island-Setup-v0.23.1-win-x64.exe`。
 2. 從系統匣退出舊版，執行安裝程式。預設安裝到目前使用者，不需要管理員權限。
 3. 從桌面或開始功能表開啟「終末地 靈動島」。可在 Windows「已安裝的應用程式」解除安裝。
 4. 在設定選擇顯示位置；音樂貼上自己的 YouTube 清單，通知按「要求通知讀取權限」。
@@ -41,7 +41,7 @@
 ## 本機優先
 
 - AI 輸入框支援 `Ctrl+V` 貼圖，按送出才判讀；自動／搜尋＋AI 模式可接續 XNG 查資料。圖片不傳給 XNG，也不建立長期記憶。這是圖片理解，沒有生圖或付費備援。
-- 同一輪 Gemini 回答可辨識明確的個人原句，不另扣分類次數。假設、玩笑、第三人資料、敏感資訊及推測不自動記憶。貼圖與此記憶功能需要相容 Gemini Hub 0.2.0 或更新版本。
+- 同一輪 Gemini 回答可辨識明確的個人原句，不另扣分類次數。假設、玩笑、第三人資料、敏感資訊及推測不自動記憶。建議 Gemini Hub 0.2.1 或更新版本，使用必填的結構化記憶判斷，避免模型漏附分類；貼圖仍相容 0.2.0。
 - XNG 提供可追溯的搜尋證據；AI 使用端整理回答。搜尋邏輯集中維護。
 - 正常搜尋不自動呼叫 Gemini 或付費搜尋服務。Gemini 依共用 Hub 的用量限制與免費核對規則執行。
 - 對話、提醒與記憶採 Windows 使用者加密；頭像只保存在本機。通知不會送給模型。
