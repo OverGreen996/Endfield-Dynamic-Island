@@ -112,7 +112,8 @@ public partial class HudWindow : Window
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
-        var ct = _cts.Token;
+        var localCts = _cts;
+        var ct = localCts.Token;
         IsHudBusy = true;
 
         ApplyRenderData(data);
@@ -137,7 +138,7 @@ public partial class HudWindow : Window
         }
         finally
         {
-            IsHudBusy = false;
+            if(ReferenceEquals(_cts,localCts))IsHudBusy = false;
         }
     }
 
@@ -287,7 +288,8 @@ public partial class HudWindow : Window
     public async Task ShowPersistentAsync(
         HudRenderData data,
         Func<CancellationToken, Task<HudRenderData>>? liveRefresh = null,
-        bool sessionPinned = false)
+        bool sessionPinned = false,
+        bool quick = false)
     {
         _persistent = true;
         _sessionPinned = sessionPinned;
@@ -316,7 +318,16 @@ public partial class HudWindow : Window
         try
         {
             // 複用原動畫，只去掉最後的 ScaleOut，因此最終停留在原動畫 C 狀態。
-            if (data.SimpleAnimation)
+            if (quick)
+            {
+                PreparePreviewInitialState();
+                await Task.WhenAll(
+                    HudAnimations.PreviewPillIn(SurfaceWidth,SurfaceHeight).RunAsync(Pill,ct),
+                    HudAnimations.PreviewContentIn().RunAsync(BoltIcon,ct),
+                    HudAnimations.PreviewContentIn().RunAsync(NumHost,ct),
+                    HudAnimations.PreviewContentIn().RunAsync(ClockHost,ct));
+            }
+            else if (data.SimpleAnimation)
             {
                 SetSimpleCState();
                 await Task.WhenAll(
@@ -378,6 +389,11 @@ public partial class HudWindow : Window
 
         if (!IsVisible)
             ShowPositioned();
+    }
+
+    public void UpdateVisible(HudRenderData data)
+    {
+        if(IsVisible)ApplyRenderData(data);
     }
 
     public void HidePersistent() => _ = HidePersistentAsync();

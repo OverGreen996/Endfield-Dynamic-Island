@@ -177,6 +177,14 @@ public sealed class VariableHub : IDisposable
     public static IReadOnlyList<string> BuiltInVariableKeys =>
         VariableCatalog.AllBuiltIns.Select(x => x.Key).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
+    public static void AddImmediateValues(IDictionary<string,object?> values,IEnumerable<string> requestedVariables)
+    {
+        var requested=new HashSet<string>(requestedVariables,StringComparer.OrdinalIgnoreCase);
+        bool system=NeedsPrefix(requested,"system."),time=NeedsPrefix(requested,"time.");
+        if(system||time)AddClockAndSystem(values,system,time);
+        if(NeedsPrefix(requested,"display."))AddDisplay(values);
+    }
+
     private static void AddClockAndSystem(IDictionary<string, object?> v, bool includeSystem, bool includeTime)
     {
         var now = DateTime.Now;
@@ -312,6 +320,7 @@ public sealed class VariableHub : IDisposable
         if (includeCpu)
         {
             double usage = 0d, userUsage = 0d, kernelUsage = 0d, idlePercent = 0d;
+            bool measured = false;
             if (GetSystemTimes(out var idleFt, out var kernelFt, out var userFt))
             {
                 ulong idle = ToUInt64(idleFt), kernel = ToUInt64(kernelFt), user = ToUInt64(userFt);
@@ -323,6 +332,7 @@ public sealed class VariableHub : IDisposable
                     ulong totalDelta = kernelDelta + userDelta;
                     if (totalDelta > 0)
                     {
+                        measured = true;
                         idlePercent = Math.Clamp(idleDelta / (double)totalDelta * 100d, 0d, 100d);
                         userUsage = Math.Clamp(userDelta / (double)totalDelta * 100d, 0d, 100d);
                         kernelUsage = Math.Clamp(Math.Max(0d, kernelDelta - idleDelta) / totalDelta * 100d, 0d, 100d);
@@ -336,10 +346,14 @@ public sealed class VariableHub : IDisposable
                 _cpuPrimed = true;
             }
 
-            v["cpu.usage"] = usage;
-            v["cpu.user_usage"] = userUsage;
-            v["cpu.kernel_usage"] = kernelUsage;
-            v["cpu.idle_percent"] = _cpuPrimed ? idlePercent : Math.Max(0d, 100d - usage);
+            // The first system-times read establishes a baseline, not a 0% measurement.
+            if (measured)
+            {
+                v["cpu.usage"] = usage;
+                v["cpu.user_usage"] = userUsage;
+                v["cpu.kernel_usage"] = kernelUsage;
+                v["cpu.idle_percent"] = idlePercent;
+            }
 
             if (DateTime.UtcNow >= _nextCpuInfoRead)
             {

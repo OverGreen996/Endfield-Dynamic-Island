@@ -98,6 +98,7 @@ public partial class SettingsWindow : Window
         _settings = settings;
         _hud = hud;
         _runtime = runtime;
+        Customizer.UseDataService(runtime.Data);
         _saveSettings = saveSettings ?? SettingsManager.Save;
         _applyStartup = applyStartup ?? StartupManager.Apply;
 

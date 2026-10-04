@@ -23,7 +23,12 @@ public sealed class BackgroundYouTubeSession : IPlaylistMusicSession
     private bool _disposed;
     public bool AudioObserved { get; private set; }
     public bool HostHidden { get; private set; }
-    public BackgroundYouTubeSession(string? executable=null)=>_executable=executable??Path.Combine(AppContext.BaseDirectory,"MusicPlayerHost","MusicPlayerHost.exe");
+    public BackgroundYouTubeSession(string? executable=null)=>_executable=executable??DefaultExecutable();
+    private static string DefaultExecutable()
+    {
+        var shared=Path.Combine(AppContext.BaseDirectory,"MusicPlayerHost.exe");
+        return File.Exists(shared)?shared:Path.Combine(AppContext.BaseDirectory,"MusicPlayerHost","MusicPlayerHost.exe");
+    }
     public void Open(string url)
     {
         ObjectDisposedException.ThrowIf(_disposed,this);url=PlaylistStore.Normalize(url);

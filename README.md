@@ -10,11 +10,13 @@
 <p align="center">
   <img alt="Windows 10 / 11" src="https://img.shields.io/badge/Windows-10%20%2F%2011-13C8EB?style=flat-square">
   <img alt=".NET 8" src="https://img.shields.io/badge/.NET-8-323736?style=flat-square">
-  <img alt="v0.24.0" src="https://img.shields.io/badge/release-v0.24.0-E6E744?style=flat-square">
+  <img alt="v0.25.0" src="https://img.shields.io/badge/release-v0.25.0-E6E744?style=flat-square">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-323736?style=flat-square">
 </p>
 
 以終末地的工業介面為靈感，搭配石墨灰面板、青藍資訊與黃色操作重點。視窗切換使用銜接動畫；一次呈現一種內容，通知結束後回到原來的頁面。
+
+v0.25.0 將 HUD 顯示與採樣分離。硬體方案收起時約每 5 秒背景預採樣，顯示時約每秒更新；喚出直接讀快取，AI／音樂／通知不等待硬體暖機。採樣與設定預覽共用同一份服務，完整電源演出保留。[採樣架構與限制](docs/ARCHITECTURE.md#v0250-顯示與採樣分離)。
 
 ## 一眼看懂，一鍵喚出
 
@@ -29,7 +31,7 @@
 
 ## 先下載，後設定
 
-1. 到 [Releases](https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest) 下載 `Endfield-Dynamic-Island-Setup-v0.24.0-win-x64.exe`。
+1. 到 [Releases](https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest) 下載 `Endfield-Dynamic-Island-Setup-v0.25.0-win-x64.exe`。
 2. 從系統匣退出舊版，執行安裝程式。預設安裝到目前使用者，不需要管理員權限。
 3. 從桌面或開始功能表開啟「終末地 靈動島」。可在 Windows「已安裝的應用程式」解除安裝。
 4. 在設定選擇顯示位置；音樂貼上自己的 YouTube 清單，通知按「要求通知讀取權限」。

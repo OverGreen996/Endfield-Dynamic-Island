@@ -53,6 +53,15 @@ public static class GpuAdapterCatalog
     private static DateTime _expiresAt = DateTime.MinValue;
     private static IReadOnlyList<GpuAdapterInfo> _cache = Array.Empty<GpuAdapterInfo>();
 
+    public static IReadOnlyList<GpuAdapterInfo> ReadCached() => System.Threading.Volatile.Read(ref _cache);
+    private static readonly object RefreshGate=new();
+    private static System.Threading.Tasks.Task<IReadOnlyList<GpuAdapterInfo>>? _refresh;
+    public static System.Threading.Tasks.Task<IReadOnlyList<GpuAdapterInfo>> RefreshAsync()
+    {
+        lock(RefreshGate)
+            return _refresh is {IsCompleted:false}?_refresh:_refresh=System.Threading.Tasks.Task.Run(()=>GetAdapters());
+    }
+
     private const int DxgiErrorNotFound = unchecked((int)0x887A0002);
     private const uint DxgiAdapterFlagSoftware = 2;
     private static readonly Guid IidDxgiFactory1 = new("770aae78-f26f-4dba-a829-253c83d1b387");

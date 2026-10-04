@@ -1,6 +1,10 @@
 using System.Text.Json;
 using Avalonia;
 using EndfieldChargePlus.Assistant;
+if(args.Contains("--performance-baseline")){await StartupPerformanceProbe.BaselineAsync();return;}
+if(args.Contains("--performance-unit")){await StartupPerformanceProbe.UnitAsync();return;}
+if(args.Contains("--performance-monitor")){await StartupPerformanceProbe.MonitorAsync();return;}
+if(args.Contains("--performance-ui")){AppBuilder.Configure<StartupPerformanceApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
 if(args.Contains("--image-live-ui")){AppBuilder.Configure<PastedImageLiveApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
 if(args.Contains("--image-unit")){ImageInputProbe.Run();return;}
 if(args.Contains("--industrial-unit")){IndustrialFeatureProbe.Run();return;}

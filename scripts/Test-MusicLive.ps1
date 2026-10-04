@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$HostExe,[Parameter(Mandatory=$true)][string]$PlaylistUrl,[int]$NextCount=6)
+param([Parameter(Mandatory=$true)][string]$HostExe,[Parameter(Mandatory=$true)][string]$PlaylistUrl,[int]$NextCount=6,[ValidatePattern('^$|^[A-Za-z0-9_-]{11}$')][string]$RepeatTrackId='')
 $ErrorActionPreference='Stop'
 $tempRoot=[IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\','/')
 $profile=Join-Path $tempRoot ('IslandMusicVerification-'+[guid]::NewGuid().ToString('N'))
@@ -22,7 +22,7 @@ function Read-Until([scriptblock]$Condition,[int]$Seconds=30){
   if($message.type -eq 'state'){$script:lastState=$message.state}
   if(& $Condition $message){return $message}
  }
- Write-Output ('TIMEOUT STATE: '+($script:lastState|ConvertTo-Json -Depth 4 -Compress))
+ Write-Host ('TIMEOUT STATE: '+($script:lastState|ConvertTo-Json -Depth 4 -Compress))
  throw 'Timed out waiting for actual YouTube playback state.'
 }
 function Command([string]$Kind,[double]$Value=0){
@@ -58,6 +58,14 @@ try{
  Read-Until {param($m) $m.type -eq 'state' -and $m.state.ready -and !$m.state.ad -and $m.state.video -ne $beforeEnd} 45 | Out-Null
  if(!$lastState.shuffle -or $lastState.video -notin $remaining){Write-Output ('END DIAGNOSTIC: before='+$beforeEnd+' actual='+$lastState.video+' remaining='+($remaining -join ',')+' queue='+($lastState.queue|ConvertTo-Json -Compress));throw 'Actual ended event did not use the remaining shuffled queue.'}
  Write-Output ('AUTO NEXT: '+$lastState.video+' '+$lastState.title+'; shuffle='+$lastState.shuffle)
+ if($RepeatTrackId){
+  for($i=0;$lastState.video -ne $RepeatTrackId -and $i -lt [Math]::Min(200,$lastState.count*2);$i++){
+   $current=$lastState.video;Command 'Next'
+   Read-Until {param($m) $m.type -eq 'state' -and $m.state.ready -and !$m.state.ad -and $m.state.video -ne $current} 45 | Out-Null
+  }
+  if($lastState.video -ne $RepeatTrackId){throw 'Requested repeat regression track was not found in the playlist.'}
+  Write-Output ('REPEAT REGRESSION TRACK: '+$lastState.video+' '+$lastState.title)
+ }
  Command 'Repeat' 2
  Write-Output 'CHECK: single-track repeat enabled.'
  Read-Until {param($m) $m.type -eq 'state' -and $m.state.repeat -eq 2} 15 | Out-Null

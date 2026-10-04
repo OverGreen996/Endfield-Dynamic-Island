@@ -11,6 +11,8 @@ if (!window.islandMusic) {
     // YouTube temporarily clears playlist metadata during SPA/ad transitions.
     // A provisional empty list is not evidence that unplayed tracks disappeared.
     if(ids.length<2||!ids.includes(id))return q;
+    // A native auto-advance must not consume history/bag while repeat owns a track.
+    if(controller.repeat===2&&q.repeatTrack&&q.repeatTrack!==id)return q;
     q.bag=q.bag.filter(x=>ids.includes(x)&&x!==id);
     if(q.pending&&q.pending!==id&&Date.now()<q.pendingUntil)return q;
     q.pending='';
@@ -21,9 +23,10 @@ if (!window.islandMusic) {
     const p=player(),list=p?.getPlaylist?.()||[],index=list.indexOf(id);
     if(index<0||typeof p.playVideoAt!=='function')return false;
     controller.queue.pending=id;controller.queue.pendingUntil=Date.now()+5000;
+    if(controller.repeat===2)controller.queue.repeatTrack=id;
     p.playVideoAt(index);p.playVideo?.();return true;
   };
-  controller.exportQueue = () => controller.shuffle ? syncQueue() : null;
+  controller.exportQueue = () => controller.shuffle||controller.repeat===2 ? syncQueue() : null;
   controller.nextShuffled = (automatic=false) => {
     const q=syncQueue(),id=currentId(),ids=playlist();
     if(ids.length<2||q.pending)return false;
@@ -35,7 +38,13 @@ if (!window.islandMusic) {
     return jump(target);
   };
   document.addEventListener('ended',event=>{
-    if(event.target?.tagName!=='VIDEO'||controller.repeat===2||document.querySelector('#movie_player.ad-showing'))return;
+    if(event.target?.tagName!=='VIDEO'||document.querySelector('#movie_player.ad-showing'))return;
+    // Some player rebuilds clear the native video.loop flag near the track end.
+    // Keep single-track repeat ahead of YouTube's playlist end listeners as well.
+    if(controller.repeat===2){
+      event.stopImmediatePropagation();event.target.loop=true;
+      const p=player();p?.seekTo?.(0,true);p?.playVideo?.();return;
+    }
     if(controller.shuffle){
       event.stopImmediatePropagation();
       if(!controller.nextShuffled(true))player()?.pauseVideo?.();
@@ -65,7 +74,12 @@ if (!window.islandMusic) {
     if(v && controller.repeat===2 && !ad){v.loop=true;p.setLoopVideo?.(true);}
     const duration=Number.isFinite(v?.duration)?v.duration:0;
     const queue=controller.exportQueue();
-    const switching=!!queue?.pending&&queue.pending!==d.video_id&&Date.now()<queue.pendingUntil;
+    const repeatDrift=!ad&&controller.repeat===2&&!!queue?.repeatTrack&&queue.repeatTrack!==d.video_id&&list.includes(queue.repeatTrack);
+    if(repeatDrift&&Date.now()>(controller.repeatRecoveryAt||0)){
+      controller.repeatRecoveryAt=Date.now()+3000;
+      p.playVideoAt(list.indexOf(queue.repeatTrack));p.playVideo?.();
+    }
+    const switching=repeatDrift||!!queue?.pending&&queue.pending!==d.video_id&&Date.now()<queue.pendingUntil;
     return {ready,title:String(m?.title||d.title||'YouTube 播放清單').slice(0,512),artist:String(m?.artist||d.author||'YouTube').slice(0,512),video:/^[A-Za-z0-9_-]{11}$/.test(d.video_id||'')?d.video_id:'',playing:!!v&&!v.paused,position:Number.isFinite(v?.currentTime)?v.currentTime:0,duration,shuffle:controller.shuffle??(!!changed||shuffleButton?.getAttribute('aria-pressed')==='true'),repeat:controller.repeat,count:Math.min(list.length,10000),error:String(document.querySelector('.ytp-error-content-wrap')?.innerText||'').slice(0,200),ad,canShuffle:typeof p?.playVideoAt==='function'&&list.length>1,canRepeat:typeof p?.setLoop==='function'&&typeof p?.setLoopVideo==='function',queue,switching};
   };
   controller.command = ({kind,value,force=false}) => {
@@ -75,20 +89,28 @@ if (!window.islandMusic) {
     if(v.readyState<2)return false;
     if(kind==='Previous'){
       if(controller.shuffle){const q=syncQueue();if(q.pending||q.cursor<1)return false;q.cursor--;return jump(q.history[q.cursor]);}
+      if(controller.repeat===2){const ids=playlist(),index=ids.indexOf(currentId());return index>=0&&jump(ids[Math.max(0,index-1)]);}
       p.previousVideo();return true;
     }
-    if(kind==='Next'){if(controller.shuffle)return controller.nextShuffled();p.nextVideo();return true;}
+    if(kind==='Next'){
+      if(controller.shuffle)return controller.nextShuffled();
+      if(controller.repeat===2){const ids=playlist(),index=ids.indexOf(currentId());return index>=0&&jump(ids[(index+1)%ids.length]);}
+      p.nextVideo();return true;
+    }
     if(kind==='Seek'){if(!Number.isFinite(v.duration))return false;p.seekTo(Math.max(0,Math.min(v.duration,value)),true);return true;}
     if(kind==='Shuffle'&&(value===0||value===1)){
       if(playlist().length<2||typeof p.playVideoAt!=='function')return false;
       if(value===1&&typeof p.getShuffle==='function'&&p.getShuffle())p.setShuffle?.(false);
       controller.shuffle=value===1;
-      if(controller.shuffle)syncQueue();else controller.queue=null;
+      if(controller.shuffle)syncQueue();else if(controller.repeat!==2&&!force)controller.queue=null;
       return true;
     }
     if(kind==='Repeat'&&[0,1,2].includes(value)&&typeof p.setLoop==='function'&&typeof p.setLoopVideo==='function'){
       p.setLoop(value===1);p.setLoopVideo(value===2);v.loop=value===2;
       if(!!p.getLoopVideo?.()!==(value===2))return false;
+      const q=syncQueue();
+      if(value===2&&(!force||!q.repeatTrack))q.repeatTrack=currentId();
+      if(value!==2)delete q.repeatTrack;
       controller.repeat=value;return true;
     }
     return false;
@@ -98,14 +120,15 @@ if (!window.islandMusic) {
     if(!p||!v||v.readyState<2||!id||document.querySelector('#movie_player.ad-showing'))return;
     if(!controller.queue&&queue&&Array.isArray(queue.bag)&&queue.bag.length<=10000&&Array.isArray(queue.history)&&queue.history.length<=256&&
       queue.bag.concat(queue.history).every(x=>typeof x==='string'&&/^[A-Za-z0-9_-]{11}$/.test(x))&&
-      Number.isInteger(queue.cursor)&&queue.cursor>=-1&&queue.cursor<queue.history.length&&typeof queue.pending==='string'&&Number.isFinite(queue.pendingUntil))
+      Number.isInteger(queue.cursor)&&queue.cursor>=-1&&queue.cursor<queue.history.length&&typeof queue.pending==='string'&&Number.isFinite(queue.pendingUntil)&&
+      (queue.repeatTrack===undefined||/^[A-Za-z0-9_-]{11}$/.test(queue.repeatTrack)))
       controller.queue=JSON.parse(JSON.stringify(queue));
     if(controller.restoredPlayer===p&&controller.restoredVideo===id)return;
     // The host owns preferences across complete navigations. Reapply once per
     // ready track/player rather than treating a rebuilt DOM as "shuffle off".
     let applied=true;
     if(typeof shuffle==='boolean')applied=controller.command({kind:'Shuffle',value:shuffle?1:0,force:true})&&applied;
-    if([0,1,2].includes(repeat))applied=controller.command({kind:'Repeat',value:repeat})&&applied;
+    if([0,1,2].includes(repeat))applied=controller.command({kind:'Repeat',value:repeat,force:true})&&applied;
     if(applied){controller.restoredPlayer=p;controller.restoredVideo=id;}
   };
   window.islandMusic=controller;

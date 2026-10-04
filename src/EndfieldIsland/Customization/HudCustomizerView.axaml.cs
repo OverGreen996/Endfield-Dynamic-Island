@@ -93,7 +93,9 @@ public partial class HudCustomizerView : UserControl
     private CustomHudSettings _loaded = CustomHudSettings.CreateDefault();
     private int _selectedIndex = -1;
     private bool _loading;
-    private readonly VariableHub _previewVariables = new();
+    private HudDataService? _previewData;
+    private bool _gpuRefreshPending;
+    public void UseDataService(HudDataService data)=>_previewData=data;
 
     public HudCustomizerView()
     {
@@ -637,8 +639,26 @@ public partial class HudCustomizerView : UserControl
 
     private void RefreshGpuAdapters()
     {
-        try { _gpuAdapters = GpuAdapterCatalog.GetAdapters(); }
-        catch { _gpuAdapters = Array.Empty<GpuAdapterInfo>(); }
+        ApplyGpuAdapters(GpuAdapterCatalog.ReadCached());
+        if(_gpuRefreshPending)return;
+        _=RefreshGpuAdaptersAsync();
+    }
+    private async System.Threading.Tasks.Task RefreshGpuAdaptersAsync()
+    {
+        _gpuRefreshPending=true;
+        try
+        {
+            var adapters=await GpuAdapterCatalog.RefreshAsync();
+            var preferred=GetSelectedGpuAdapterId(_selectedIndex>=0&&_selectedIndex<_profiles.Count?_profiles[_selectedIndex].GpuAdapterId:"");
+            ApplyGpuAdapters(adapters);
+            SelectGpuAdapter(preferred);
+        }
+        catch{}
+        finally{_gpuRefreshPending=false;}
+    }
+    private void ApplyGpuAdapters(IReadOnlyList<GpuAdapterInfo> adapters)
+    {
+        _gpuAdapters=adapters;
 
         if (GpuAdapterCombo is null) return;
         var currentId = GetSelectedGpuAdapterId("");
@@ -924,15 +944,14 @@ public partial class HudCustomizerView : UserControl
                 HttpSources = _httpSources.Select(CloneHttp).ToList()
             };
             var profile = BuildEditedProfile(_profiles[_selectedIndex]);
-            var required = HudProfileRenderer.GetRequiredVariables(profile);
-            var vars = await _previewVariables.SnapshotAsync(settings, required, profile.GpuAdapterId, profile.PingTarget, profile.ProbeProtocol, profile.ProbePort);
-            var data = HudProfileRenderer.Render(profile, vars);
+            var dataService=_previewData??=new HudDataService();
+            var data = dataService.Read(settings,profile);
             ProfileStatusText.Text = "";
 
             Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<HudRenderData>> refresh = async ct =>
             {
-                var latest = await _previewVariables.SnapshotAsync(settings, required, profile.GpuAdapterId, profile.PingTarget, profile.ProbeProtocol, profile.ProbePort, ct);
-                return HudProfileRenderer.Render(profile, latest);
+                await dataService.RefreshAsync(settings,profile,ct);
+                return dataService.Read(settings,profile);
             };
 
             await _hud.ShowCustomAsync(data, refresh);

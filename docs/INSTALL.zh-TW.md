@@ -1,6 +1,6 @@
 # 安裝「終末地 靈動島」
 
-1. 到 [GitHub Releases](https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest) 下載 `Endfield-Dynamic-Island-Setup-v0.24.0-win-x64.exe`。另有 SHA256 可核對完整性。
+1. 到 [GitHub Releases](https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest) 下載 `Endfield-Dynamic-Island-Setup-v0.25.0-win-x64.exe`。另有 SHA256 可核對完整性。
 2. 從系統匣退出舊版，執行 Setup，選擇繁體中文或 English。
 3. 預設安裝到 `%LocalAppData%\Programs\EndfieldDynamicIsland`，可更換位置。安裝至目前使用者，不需要管理員權限。
 4. 選擇桌面捷徑，核對位置後安裝。從桌面或開始功能表開啟。

@@ -4,6 +4,8 @@
 
 A Windows desktop island for AI conversations, music, notifications and system telemetry. Graphite panels, cyan information and restrained yellow accents draw on Endfield's industrial visual language.
 
+v0.25.0 separates presentation from collection: local hardware profiles pre-sample about every 5 seconds while hidden and every second while visible. Summoning reads a shared cache without waiting for hardware. Settings previews reuse the same collector; AI, music and notifications open independently. Main app and music host remain separate processes while sharing installed .NET runtime files. Hidden prewarming never starts HTTP or ping probes.
+
 [Download](https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest) · [繁體中文](README.md)
 
 | Feature | Interaction |
@@ -16,7 +18,7 @@ A Windows desktop island for AI conversations, music, notifications and system t
 
 ## Install
 
-Download `Endfield-Dynamic-Island-Setup-v0.24.0-win-x64.exe` from Releases. Exit the previous app from its tray menu and run Setup. It installs for the current user without administrator rights. Open from the desktop or Start menu; uninstall through Windows Installed apps. The executable and internal IDs retain their previous names for upgrade compatibility; the visible product name is Endfield Dynamic Island.
+Download `Endfield-Dynamic-Island-Setup-v0.25.0-win-x64.exe` from Releases. Exit the previous app from its tray menu and run Setup. It installs for the current user without administrator rights. Open from the desktop or Start menu; uninstall through Windows Installed apps. The executable and internal IDs retain their previous names for upgrade compatibility; the visible product name is Endfield Dynamic Island.
 
 Setup includes the .NET runtime and music host. Upgrades and uninstall preserve user data. Portable packages are no longer distributed. YouTube playlist playback additionally requires Microsoft Edge WebView2 Runtime. Enable notification access in Settings. Add your own playlist; the distribution contains no personal playlist.
 

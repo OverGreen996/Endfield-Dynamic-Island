@@ -5,13 +5,14 @@ $testRoot=Join-Path ([IO.Path]::GetTempPath()) ('IslandInstallerVerification-'+[
 $hub=Join-Path $testRoot 'SharedHub';$app=Join-Path $testRoot 'App';$output=Join-Path $testRoot 'Setup'
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 $processBefore=(Get-NetTCPConnection -State Listen -LocalPort 8890 -ErrorAction SilentlyContinue).OwningProcess
-& $InnoCompiler '/Qp' "/DPayloadDir=$PayloadDir" "/DHubPayloadDir=$(Join-Path $PayloadDir 'SharedHubPayload')" '/DAppVersion=0.24.0' "/DOutputDir=$output" "/DHubDataDir=$hub" '/DSetupAppId=4A40BCD0-0126-4668-A981-18A378BD1F3D' '/DAppMutexName=Local\IslandInstallerVerification' '/DVerificationBuild=1' (Join-Path $sourceRoot 'installer\EndfieldIsland.iss')
+& $InnoCompiler '/Qp' "/DPayloadDir=$PayloadDir" "/DHubPayloadDir=$(Join-Path $PayloadDir 'SharedHubPayload')" '/DAppVersion=0.25.0' "/DOutputDir=$output" "/DHubDataDir=$hub" '/DSetupAppId=4A40BCD0-0126-4668-A981-18A378BD1F3D' '/DAppMutexName=Local\IslandInstallerVerification' '/DVerificationBuild=1' (Join-Path $sourceRoot 'installer\EndfieldIsland.iss')
 if($LASTEXITCODE -ne 0){throw 'Isolated installer compilation failed.'}
-$setup=Join-Path $output 'Endfield-Dynamic-Island-Setup-v0.24.0-win-x64.exe'
+$setup=Join-Path $output 'Endfield-Dynamic-Island-Setup-v0.25.0-win-x64.exe'
 for($i=0;$i -lt 2;$i++){
  $install=Start-Process -FilePath $setup -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/TASKS=',('/DIR="'+$app+'"'),('/LOG="'+(Join-Path $testRoot ('install-'+$i+'.log'))+'"')) -WindowStyle Hidden -PassThru -Wait
  if($install.ExitCode -ne 0){throw 'Isolated install/upgrade failed.'}
  if(!(Test-Path -LiteralPath (Join-Path $app 'EndfieldChargePlus.exe')) -or !(Test-Path -LiteralPath (Join-Path $hub 'runtime\node.exe'))){throw 'App or shared Node payload missing.'}
+ if(!(Test-Path -LiteralPath (Join-Path $app 'MusicPlayerHost.exe')) -or (Test-Path -LiteralPath (Join-Path $app 'MusicPlayerHost\coreclr.dll'))){throw 'Shared music runtime layout is missing or duplicated.'}
  if($i -eq 0){
   $paths=@('policy.json','data\hub.token','data\usage.sqlite','data\usage.sqlite.initialized')
   $hashes=@{};foreach($path in $paths){$hashes[$path]=(Get-FileHash -LiteralPath (Join-Path $hub $path)).Hash}

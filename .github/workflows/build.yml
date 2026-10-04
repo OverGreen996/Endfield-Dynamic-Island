@@ -41,7 +41,7 @@ jobs:
         shell: pwsh
         run: |
           $dll='tests/IslandRegression/bin/Release/net8.0-windows10.0.19041.0/IslandRegression.dll'
-          foreach ($flag in @('--unit','--music-unit','--notification-unit','--personal-unit','--image-unit')) {
+          foreach ($flag in @('--unit','--music-unit','--notification-unit','--personal-unit','--image-unit','--performance-unit')) {
             dotnet $dll $flag
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }

@@ -12,15 +12,17 @@ if($LASTEXITCODE -ne 0 -or $compilerVersion -notmatch '\b(\d+\.\d+\.\d+)\b' -or 
 $destination=Join-Path $root ('artifacts\staging\v'+$version+'-'+(Get-Date -Format 'yyyyMMdd-HHmmss'))
 & $Dotnet publish (Join-Path $root 'src\EndfieldIsland\EndfieldChargePlus.csproj') -c Release -r $Runtime --self-contained true -o $destination
 if($LASTEXITCODE -ne 0){throw 'Island publish failed.'}
-& $Dotnet publish (Join-Path $root 'src\MusicPlayerHost\MusicPlayerHost.csproj') -c Release -r $Runtime --self-contained true -o (Join-Path $destination 'MusicPlayerHost')
+# Both independent processes share the same pinned .NET files on disk.
+# Executable/deps/runtimeconfig names stay distinct; private player data stays outside the installation.
+& $Dotnet publish (Join-Path $root 'src\MusicPlayerHost\MusicPlayerHost.csproj') -c Release -r $Runtime --self-contained true -o $destination
 if($LASTEXITCODE -ne 0){throw 'Music host publish failed.'}
 foreach($file in @('LICENSE','NOTICE.md','README.md','README.en.md')){Copy-Item -LiteralPath (Join-Path $root $file) -Destination $destination}
 Copy-Item -LiteralPath (Join-Path $root 'docs') -Destination $destination -Recurse
-foreach($relative in @('EndfieldChargePlus.runtimeconfig.json','MusicPlayerHost\MusicPlayerHost.runtimeconfig.json')){
+foreach($relative in @('EndfieldChargePlus.runtimeconfig.json','MusicPlayerHost.runtimeconfig.json')){
  $config=Get-Content -LiteralPath (Join-Path $destination $relative) -Raw | ConvertFrom-Json
  if(!$config.runtimeOptions.includedFrameworks){throw 'Self-contained runtime missing.'}
 }
-if(!(Test-Path -LiteralPath (Join-Path $destination 'MusicPlayerHost\nonstop\LICENSE'))){throw 'NonStop license missing.'}
+if(!(Test-Path -LiteralPath (Join-Path $destination 'nonstop\LICENSE'))){throw 'NonStop license missing.'}
 $installerOutput=Join-Path $root 'artifacts\installer'
 $hubDestination=Join-Path $destination 'SharedHubPayload'
 New-Item -ItemType Directory -Path (Join-Path $hubDestination 'core') -Force | Out-Null

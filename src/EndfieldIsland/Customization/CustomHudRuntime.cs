@@ -13,7 +13,14 @@ namespace EndfieldChargePlus.Customization;
 public sealed class CustomHudRuntime : IDisposable
 {
     private readonly HudWindow _hud;
-    private readonly VariableHub _variables = new();
+    private readonly HudDataService _data;
+    private readonly bool _ownsData;
+    public HudDataService Data => _data;
+    private int _displayEpoch;
+    private string _displayProfileId="";
+    private bool _disposed;
+    private bool _stopped;
+    private CancellationTokenSource? _warming;
     private readonly DispatcherTimer _timer;
 
     private AppSettings _appSettings = new();
@@ -39,9 +46,9 @@ public sealed class CustomHudRuntime : IDisposable
     {
         _assistantActive = true;
         _timer.Stop();
-        // Let an in-flight monitor snapshot/animation settle before switching modes.
-        for (int i = 0; i < 100 && (_hud.IsHudBusy || Volatile.Read(ref _busy) != 0 || Volatile.Read(ref _settingsTransitionBusy) != 0); i++)
-            await Task.Delay(50);
+        ++_displayEpoch;
+        _displayProfileId="";
+        // Switching the visible surface cancels its animation; sampling stays independent.
         await _hud.HideAnimatedAsync();
         _previewShown = false;
         _persistentShown = false;
@@ -52,7 +59,7 @@ public sealed class CustomHudRuntime : IDisposable
         _assistantActive = false;
         _hotZoneLatched = true;
         _nextPersistentRefresh = DateTime.MinValue;
-        _timer.Start();
+        if (!_stopped && !_disposed) _timer.Start();
     }
 
     private bool _hotZoneLatched;
@@ -62,9 +69,10 @@ public sealed class CustomHudRuntime : IDisposable
     private bool _pendingPowerEvent;
     private bool _pendingAcOnline;
 
-    public CustomHudRuntime(HudWindow hud)
+    public CustomHudRuntime(HudWindow hud,HudDataService? data=null)
     {
         _hud = hud;
+        _data=data??new HudDataService();_ownsData=data is null;
         _hud.PinToggleRequested += OnPinToggleRequested;
         // 100 ms：用於螢幕頂邊熱點偵測和牆鍾秒邊界同步。重型指標仍按需取樣。
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
@@ -73,6 +81,7 @@ public sealed class CustomHudRuntime : IDisposable
 
     public void ApplySettings(AppSettings settings)
     {
+        ++_displayEpoch;_displayProfileId="";
         _appSettings = settings ?? new AppSettings();
         _settings = HudSettingsNormalizer.Normalize(_appSettings.CustomHud ?? CustomHudSettings.CreateDefault());
         _profileIndex = _settings.AutoCycle ? 0 : ResolveActiveProfileIndex();
@@ -118,21 +127,16 @@ public sealed class CustomHudRuntime : IDisposable
             if (settings.AlwaysVisible && _settings.AutoCycle)
                 profile = ApplyCycleAnimationMode(profile);
 
-            var required = HudProfileRenderer.GetRequiredVariables(profile);
-            var vars = await _variables.SnapshotAsync(_settings, required, profile.GpuAdapterId, profile.PingTarget, profile.ProbeProtocol, profile.ProbePort);
-            var data = HudProfileRenderer.Render(profile, vars);
+            var data = ReadAndRefresh(profile);
 
             if (_assistantActive) return;
 
-            Func<CancellationToken, Task<HudRenderData>> refresh = async ct =>
-            {
-                var latest = await _variables.SnapshotAsync(_settings, required, profile.GpuAdapterId, profile.PingTarget, profile.ProbeProtocol, profile.ProbePort, ct);
-                return HudProfileRenderer.Render(profile, latest);
-            };
+
 
             if (settings.AlwaysVisible)
             {
-                await _hud.ShowPersistentAsync(data, refresh);
+                await _hud.ShowPersistentAsync(data, quick: true);
+                if(_assistantActive||_disposed)return;
                 _persistentShown = true;
                 _persistentProfileId = profile.Id;
                 _nextPersistentRefresh = DateTime.MinValue;
@@ -141,6 +145,7 @@ public sealed class CustomHudRuntime : IDisposable
             else
             {
                 await _hud.ShowPreviewAsync(data, allowPin: true);
+                if(_assistantActive||_disposed)return;
                 _previewShown = true;
                 _previewProfile = profile;
                 _previewHideAt = DateTime.UtcNow.AddSeconds(Math.Clamp(_appSettings.DisplayDurationSeconds, 3d, 10d));
@@ -148,7 +153,7 @@ public sealed class CustomHudRuntime : IDisposable
         }
         finally
         {
-            _timer.Start();
+            if (!_stopped && !_disposed && !_assistantActive) _timer.Start();
             Interlocked.Exchange(ref _settingsTransitionBusy, 0);
         }
     }
@@ -159,8 +164,49 @@ public sealed class CustomHudRuntime : IDisposable
         ApplySettings(_appSettings with { CustomHud = settings ?? CustomHudSettings.CreateDefault() });
     }
 
-    public void Start() => _ = RunStartupPresentationAsync();
-    public void Stop() => _timer.Stop();
+    public void Start()
+    {
+        if(_disposed)return;
+        _stopped=false;
+        _warming??=new CancellationTokenSource();
+        if(!_warmingStarted){_warmingStarted=true;_=WarmLoopAsync(_warming.Token);}
+        _=RunStartupPresentationAsync();
+    }
+    private bool _warmingStarted;
+    public void Stop()
+    {
+        _stopped=true;
+        _timer.Stop();_warming?.Cancel();_warming?.Dispose();_warming=null;_warmingStarted=false;
+    }
+    private async Task WarmLoopAsync(CancellationToken ct)
+    {
+        try
+        {
+            while(!ct.IsCancellationRequested)
+            {
+                var started=System.Diagnostics.Stopwatch.GetTimestamp();
+                var target=await Dispatcher.UIThread.InvokeAsync(()=>
+                {
+                    var profile=_previewProfile??_settings.Profiles.FirstOrDefault(p=>p.Id==_persistentProfileId)??ResolveActiveProfile();
+                    return (Settings:_settings,Profile:profile,Visible:_hud.IsVisible&&!_assistantActive,Enabled:_appSettings.HudEnabled,Epoch:_displayEpoch);
+                });
+                // Never prefetch HTTP, DNS, developer tools or security data just to warm hardware.
+                if(target.Enabled&&target.Profile is {} profile)
+                {
+                    if(HudDataService.CanPrewarm(profile))
+                    {
+                        await _data.RefreshAsync(target.Settings,profile,ct).ConfigureAwait(false);
+                        if(target.Visible)_=RefreshVisibleAsync(target.Settings,profile,target.Epoch);
+                    }
+                }
+                var period=TimeSpan.FromSeconds(target.Visible?1:5);
+                var elapsed=System.Diagnostics.Stopwatch.GetElapsedTime(started);
+                await Task.Delay(elapsed<period?period-elapsed:TimeSpan.FromMilliseconds(100),ct).ConfigureAwait(false);
+            }
+        }
+        catch(OperationCanceledException){}
+        catch(ObjectDisposedException){}
+    }
 
     private async Task RunStartupPresentationAsync()
     {
@@ -184,23 +230,16 @@ public sealed class CustomHudRuntime : IDisposable
             if (_appSettings.AlwaysVisible && _settings.AutoCycle)
                 profile = ApplyCycleAnimationMode(profile);
 
-            var required = HudProfileRenderer.GetRequiredVariables(profile);
-            var vars = await _variables.SnapshotAsync(
-                _settings, required, profile.GpuAdapterId, profile.PingTarget, profile.ProbeProtocol, profile.ProbePort);
-            var data = HudProfileRenderer.Render(profile, vars);
+            var data = ReadAndRefresh(profile);
 
-            Func<CancellationToken, Task<HudRenderData>> refresh = async ct =>
-            {
-                var latest = await _variables.SnapshotAsync(
-                    _settings, required, profile.GpuAdapterId, profile.PingTarget, profile.ProbeProtocol, profile.ProbePort, ct);
-                return HudProfileRenderer.Render(profile, latest);
-            };
+
 
             if (_assistantActive) return;
 
             if (_appSettings.AlwaysVisible)
             {
-                await _hud.ShowPersistentAsync(data, refresh);
+                await _hud.ShowPersistentAsync(data, quick: true);
+                if(_assistantActive||_disposed)return;
                 _persistentShown = true;
                 _persistentProfileId = profile.Id;
                 _nextPersistentRefresh = DateTime.MinValue;
@@ -210,6 +249,7 @@ public sealed class CustomHudRuntime : IDisposable
             else
             {
                 await _hud.ShowPreviewAsync(data, allowPin: true);
+                if(_assistantActive||_disposed)return;
                 _previewShown = true;
                 _previewProfile = profile;
                 _previewHideAt = DateTime.UtcNow.AddSeconds(Math.Clamp(_appSettings.DisplayDurationSeconds, 3d, 10d));
@@ -224,7 +264,7 @@ public sealed class CustomHudRuntime : IDisposable
         finally
         {
             Interlocked.Exchange(ref _settingsTransitionBusy, 0);
-            _timer.Start();
+            if (!_stopped && !_disposed && !_assistantActive) _timer.Start();
         }
     }
 
@@ -417,26 +457,19 @@ public sealed class CustomHudRuntime : IDisposable
         if (Interlocked.Exchange(ref _busy, 1) != 0) return false;
         try
         {
-            var required = HudProfileRenderer.GetRequiredVariables(profile);
-            var vars = await _variables.SnapshotAsync(
-                _settings, required, profile.GpuAdapterId, profile.PingTarget, profile.ProbeProtocol, profile.ProbePort);
-            var data = HudProfileRenderer.Render(profile, vars);
+            var data = ReadAndRefresh(profile);
 
             if (_assistantActive) return false;
 
             if (!allowPin)
             {
-                Func<CancellationToken, Task<HudRenderData>> refresh = async ct =>
-                {
-                    var latest = await _variables.SnapshotAsync(
-                        _settings, required, profile.GpuAdapterId, profile.PingTarget, profile.ProbeProtocol, profile.ProbePort, ct);
-                    return HudProfileRenderer.Render(profile, latest);
-                };
-                await _hud.ShowCustomAsync(data, refresh);
+
+                await _hud.ShowCustomAsync(data,ct=>RefreshDataAsync(profile,ct));
                 return true;
             }
 
             await _hud.ShowPreviewAsync(data, allowPin: true);
+                if(_assistantActive||_disposed)return false;
             _previewShown = true;
             _previewProfile = profile;
             _previewHideAt = DateTime.UtcNow.AddSeconds(Math.Clamp(_appSettings.DisplayDurationSeconds, 3d, 10d));
@@ -521,33 +554,28 @@ public sealed class CustomHudRuntime : IDisposable
 
         try
         {
-            var required = HudProfileRenderer.GetRequiredVariables(profile);
-            var vars = await _variables.SnapshotAsync(_settings, required, profile.GpuAdapterId, profile.PingTarget, profile.ProbeProtocol, profile.ProbePort);
-
             bool profileChanged = _persistentShown
                                   && _hud.IsVisible
                                   && !string.Equals(_persistentProfileId, profile.Id, StringComparison.OrdinalIgnoreCase);
 
             var renderProfile = _settings.AutoCycle ? ApplyCycleAnimationMode(profile) : profile;
-            var data = HudProfileRenderer.Render(renderProfile, vars);
+            var data = ReadAndRefresh(renderProfile);
 
             if (_assistantActive) return;
 
-            Func<CancellationToken, Task<HudRenderData>> refresh = async ct =>
-            {
-                var latest = await _variables.SnapshotAsync(_settings, required, profile.GpuAdapterId, profile.PingTarget, profile.ProbeProtocol, profile.ProbePort, ct);
-                return HudProfileRenderer.Render(renderProfile, latest);
-            };
+
 
             if (profileChanged)
             {
                 await _hud.HideAnimatedAsync();
-                await _hud.ShowPersistentAsync(data, refresh, sessionPinned: _userPinned);
+                await _hud.ShowPersistentAsync(data, sessionPinned: _userPinned, quick: true);
+                if(_assistantActive||_disposed)return;
                 _persistentShown = true;
             }
             else if (!_persistentShown || !_hud.IsVisible)
             {
-                await _hud.ShowPersistentAsync(data, refresh, sessionPinned: _userPinned);
+                await _hud.ShowPersistentAsync(data, sessionPinned: _userPinned, quick: true);
+                if(_assistantActive||_disposed)return;
                 _persistentShown = true;
             }
             else
@@ -641,8 +669,43 @@ public sealed class CustomHudRuntime : IDisposable
 
     public void Dispose()
     {
-        _timer.Stop();
+        _disposed=true;++_displayEpoch;
+        Stop();
         _hud.PinToggleRequested -= OnPinToggleRequested;
-        _variables.Dispose();
+        if(_ownsData)_data.Dispose();
+    }
+
+    private HudRenderData ReadAndRefresh(HudProfile profile)
+    {
+        _displayProfileId=profile.Id;
+        _=RefreshVisibleAsync(_settings,profile,_displayEpoch);
+        return _data.Read(_settings,profile);
+    }
+    private async Task RefreshVisibleAsync(CustomHudSettings settings,HudProfile profile,int epoch)
+    {
+        try
+        {
+            await Task.Yield();
+            await _data.RefreshAsync(settings,profile).ConfigureAwait(false);
+            for(int attempt=0;attempt<40;attempt++)
+            {
+                bool retry=await Dispatcher.UIThread.InvokeAsync(()=>
+                {
+                    if(_disposed||_assistantActive||epoch!=_displayEpoch||!ReferenceEquals(settings,_settings)||_displayProfileId!=profile.Id)return false;
+                    if(_hud.IsHudBusy)return true;
+                    _hud.UpdateVisible(_data.Read(settings,profile));return false;
+                });
+                if(!retry)break;
+                await Task.Delay(25).ConfigureAwait(false);
+            }
+        }
+        catch(OperationCanceledException){}
+        catch(ObjectDisposedException){}
+    }
+    private async Task<HudRenderData> RefreshDataAsync(HudProfile profile,CancellationToken ct)
+    {
+        var settings=_settings;
+        await _data.RefreshAsync(settings,profile,ct).ConfigureAwait(false);
+        return _data.Read(settings,profile);
     }
 }
