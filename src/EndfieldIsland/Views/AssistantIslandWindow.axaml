@@ -23,7 +23,7 @@
         <MenuItem x:Name="HideItem" Header="收起靈動島"/>
       </ContextMenu>
     </Border.ContextMenu>
-    <Grid x:Name="AssistantContent" RowDefinitions="Auto,*,Auto,Auto">
+    <Grid x:Name="AssistantContent" RowDefinitions="Auto,*,Auto,Auto,Auto">
       <Border CornerRadius="3" Background="#3A3D3D" BorderBrush="#626868" BorderThickness="0,1,0,1">
         <Grid x:Name="BodyHeader" ColumnDefinitions="4,36,*,Auto" Background="Transparent" Cursor="Hand" MinHeight="32">
           <Border Background="#13C8EB"/>
@@ -63,7 +63,18 @@
         <StackPanel x:Name="ConversationPanel" Spacing="14" Margin="0,0,20,0"/>
        </ScrollViewer>
       </Border>
-      <TextBox x:Name="InputBox" Grid.Row="2" Margin="0,10,0,0" Watermark="輸入訊息… Enter 送出"
+      <Border x:Name="ImagePreviewFrame" Grid.Row="2" IsVisible="False" Margin="0,10,0,0" Padding="10"
+              Background="#293436" BorderBrush="#41717A" BorderThickness="1" CornerRadius="8">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <Image x:Name="PastedImagePreview" Width="64" Height="48" Stretch="Uniform"/>
+          <StackPanel Grid.Column="1" Margin="10,0" VerticalAlignment="Center" Spacing="3">
+            <TextBlock x:Name="ImagePreviewCaption" FontSize="12" Foreground="#E2E8E6" TextWrapping="Wrap"/>
+            <TextBlock x:Name="ImagePreviewNotice" FontSize="10" Foreground="#8DE1ED" TextWrapping="Wrap"/>
+          </StackPanel>
+          <Button x:Name="RemoveImageButton" Grid.Column="2" MinWidth="48" MinHeight="36" Content="移除" VerticalAlignment="Center"/>
+        </Grid>
+      </Border>
+      <TextBox x:Name="InputBox" Grid.Row="3" Margin="0,10,0,0" Watermark="輸入訊息… Enter 送出"
                AcceptsReturn="True" TextWrapping="Wrap" MaxLength="16000"
                MinHeight="38" MaxHeight="180" FontSize="15" Foreground="#202424"
                Background="#F1F0EE" BorderBrush="#D2D4D1" CornerRadius="18" Padding="14,8"
@@ -80,7 +91,7 @@
           <SolidColorBrush x:Key="TextControlPlaceholderForegroundPointerOver" Color="#586262"/>
         </TextBox.Resources>
       </TextBox>
-      <Grid x:Name="FooterGrid" Grid.Row="3" Margin="0,10,0,0" ColumnDefinitions="*,Auto,Auto">
+      <Grid x:Name="FooterGrid" Grid.Row="4" Margin="0,10,0,0" ColumnDefinitions="*,Auto,Auto">
         <TextBlock x:Name="StatusText" Text="Alt+A 喚出 · Shift+Enter 換行" FontSize="10"
                    Foreground="#ABA99A" TextWrapping="Wrap" MaxLines="3" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding #StatusText.Text}" VerticalAlignment="Center" Margin="0,0,8,0"/>
         <ComboBox x:Name="ModeCombo" Grid.Column="1" SelectedIndex="0" MinHeight="28" FontSize="11" Width="96">

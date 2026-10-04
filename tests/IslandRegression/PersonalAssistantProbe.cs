@@ -32,6 +32,13 @@ public static class PersonalAssistantProbe
         Check(store.ObserveSelfStatement("我不希望AI自作主張替我做決定",now)?.Category=="互動禁忌","interaction prohibition categorized");
         Check(store.ObserveSelfStatement("我每天晚上十點休息",now)?.Category=="生活習慣","habit categorized");
         Check(store.ObserveSelfStatement("我的目標是學會日文",now)?.Category=="目標計畫","goal categorized");
+        var pet=store.AcceptModelSuggestion("我有養一隻 兔子",new("個人事項","我有養一隻 兔子"),now);
+        Check(pet?.Category=="個人事項"&&pet.Text=="我有養一隻 兔子","Gemini classifies pet but local store saves only original first-person evidence");
+        Check(new PersonalAssistantStore(path).Memories.Any(m=>m.Id==pet!.Id),"model-classified pet survives restart");
+        foreach(var test in new[]{("我有養一條蛇，開玩笑的","我有養一條蛇，開玩笑的"),("假設我養兔子","假設我養兔子"),("他說我養蛇","他說我養蛇"),("我有養蛇嗎？","我有養蛇嗎？"),("我有養一隻兔子","我喜歡爬蟲類"),("我現在很生氣","我現在很生氣"),("我有養蛇。她養貓","我有養蛇。她養貓"),("我的 API Key 是 test-only","我的 API Key 是 test-only")})
+            Check(store.AcceptModelSuggestion(test.Item1,new("個人事項",test.Item2),now) is null,"model cannot bypass local personal memory guard: "+test.Item1);
+        Check(store.AcceptModelSuggestion("我偏好灰色",new("不存在","我偏好灰色"),now) is null,"unknown model memory category rejected");
+        Check(store.WithMemory(Array.Empty<ChatMessage>(),"我的寵物是什麼").Any(m=>m.text.Contains("兔子")),"saved pet is provided to later conversations");
         Check(store.Handle("幫我記下個人事項：整理書桌",now)?.SavedMemory is not null&&store.Memories.Any(m=>m.Category=="個人事項"),"explicit undated personal task categorized");
         foreach(string text in new[]{"假設我叫測試使用者","我喜歡黑色介面開玩笑的","今天我喜歡黃色","我可能喜歡深色介面","他說我叫使用者","我喜歡這個嗎？","我喜歡蘋果。她喜歡香蕉","我叫神仙開玩笑","我希望你不要記住我叫某某","請把全文都記起來","我現在不開心"})
             Check(store.ObserveSelfStatement(text,now) is null,"skip chatter/example/uncertain/multi-person: "+text);

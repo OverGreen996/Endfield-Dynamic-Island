@@ -3,14 +3,14 @@
 <h1 align="center">終末地 靈動島</h1>
 <p align="center">ENDFIELD DYNAMIC ISLAND<br>把對話、音樂、通知與效能資訊，收進桌面上的一座島。</p>
 <p align="center">
-  <a href="https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest">下載 Windows 便攜版</a> ·
+  <a href="https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest">下載 Windows 安裝版</a> ·
   <a href="docs/INSTALL.zh-TW.md">安裝教學</a> ·
   <a href="README.en.md">English</a>
 </p>
 <p align="center">
   <img alt="Windows 10 / 11" src="https://img.shields.io/badge/Windows-10%20%2F%2011-13C8EB?style=flat-square">
   <img alt=".NET 8" src="https://img.shields.io/badge/.NET-8-323736?style=flat-square">
-  <img alt="v0.22.0" src="https://img.shields.io/badge/release-v0.22.0-E6E744?style=flat-square">
+  <img alt="v0.23.0" src="https://img.shields.io/badge/release-v0.23.0-E6E744?style=flat-square">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-323736?style=flat-square">
 </p>
 
@@ -29,17 +29,19 @@
 
 ## 先下載，後設定
 
-1. 到 [Releases](https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest) 下載 `Endfield-Dynamic-Island-v0.22.0-win-x64.zip`。
-2. 解壓到固定資料夾，**保留所有檔案與 `MusicPlayerHost` 子資料夾**。
-3. 執行 `EndfieldChargePlus.exe`。顯示名稱是「終末地 靈動島」；內部檔名沿用舊版以維持相容。
+1. 到 [Releases](https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest) 下載 `Endfield-Dynamic-Island-Setup-v0.23.0-win-x64.exe`。
+2. 從系統匣退出舊版，執行安裝程式。預設安裝到目前使用者，不需要管理員權限。
+3. 從桌面或開始功能表開啟「終末地 靈動島」。可在 Windows「已安裝的應用程式」解除安裝。
 4. 在設定選擇顯示位置；音樂貼上自己的 YouTube 清單，通知按「要求通知讀取權限」。
 
-便攜版附帶 .NET 執行環境。HUD、提醒、記憶管理與通知介面可獨立使用。YouTube 清單播放需要 Microsoft Edge WebView2 Runtime；跟隨瀏覽器模式使用 Windows 媒體介面，隨機／重播是否可用取決於瀏覽器的能力。
+安裝版附帶 .NET 執行環境與播放器；升級及解除安裝保留使用者資料，不再配送便攜版。HUD、提醒、記憶管理與通知介面可獨立使用。YouTube 清單播放需要 Microsoft Edge WebView2 Runtime；跟隨瀏覽器模式使用 Windows 媒體介面，隨機／重播是否可用取決於瀏覽器的能力。
 
 **AI 對話與搜尋還需要獨立的本機 Gemini Hub 服務。** 此儲存庫不配送 Gemini Hub、API Key 或私人設定。現有使用者可沿用原本服務；新電腦需先完成服務部署。XNG 是可獨立更新的共用搜尋核心，參閱 [XNG-Plugin](https://github.com/OverGreen996/XNG-Plugin)。只安裝 XNG 不會自動補齊 Gemini Hub。詳見 [服務與相容性](docs/ARCHITECTURE.md)。
 
 ## 本機優先
 
+- AI 輸入框支援 `Ctrl+V` 貼圖，按送出才判讀；自動／搜尋＋AI 模式可接續 XNG 查資料。圖片不傳給 XNG，也不建立長期記憶。這是圖片理解，沒有生圖或付費備援。
+- 同一輪 Gemini 回答可辨識明確的個人原句，不另扣分類次數。假設、玩笑、第三人資料、敏感資訊及推測不自動記憶。貼圖與此記憶功能需要相容 Gemini Hub 0.2.0 或更新版本。
 - XNG 提供可追溯的搜尋證據；AI 使用端整理回答。搜尋邏輯集中維護。
 - 正常搜尋不自動呼叫 Gemini 或付費搜尋服務。Gemini 依共用 Hub 的用量限制與免費核對規則執行。
 - 對話、提醒與記憶採 Windows 使用者加密；頭像只保存在本機。通知不會送給模型。
@@ -50,7 +52,7 @@
 
 ## 從原始碼建置
 
-需要 Windows 10 / 11 與 .NET 8 SDK。公開原始碼以相對路徑建置，無須原開發電腦的目錄。
+需要 Windows 10 / 11、.NET 8 SDK 與 Inno Setup 7.1 或更新版本。公開原始碼以相對路徑建置，無須原開發電腦的目錄。
 
 ```powershell
 git clone https://github.com/OverGreen996/Endfield-Dynamic-Island.git
@@ -60,7 +62,7 @@ dotnet build src/EndfieldIsland/EndfieldChargePlus.csproj -c Release
 ./scripts/Publish.ps1
 ```
 
-發佈到 `artifacts/Endfield-Dynamic-Island-v0.22.0-win-x64`；`Start.ps1` 可從便攜包啟動。測試使用合成資料，不呼叫 Gemini。實體多螢幕、不同 Windows DPI、不同 YouTube 清單與通知來源仍需在各自環境驗證。
+安裝程式與 SHA256 輸出到 `artifacts/installer`；`artifacts/staging` 僅為建置暫存。`scripts/Start.ps1` 啟動預設安裝位置的程式。測試使用合成資料，不呼叫 Gemini。實體多螢幕、不同 Windows DPI、不同 YouTube 清單與通知來源仍需在各自環境驗證。
 
 ## 來源與授權
 

@@ -115,6 +115,18 @@ public sealed class PersonalAssistantStore
         if (text.Length > 100 || Hypothetical(text) || UnsafeMemory(text, category=="互動禁忌") || Regex.IsMatch(text,"今天|現在|這次|暫時|可能|好像|也許|或許|不確定|外星|超人|神仙|魔王|總統|世界首富|[。；;\\n]")) return null;
         return Remember(text, category, false, now);
     }
+    public PersonalMemory? AcceptModelSuggestion(string question, MemorySuggestion suggestion, DateTimeOffset now)
+    {
+        // A model may classify, but never invent the fact, alter old memories or bypass local validation.
+        string text = question.Trim().TrimEnd('。','！','!');
+        if (suggestion is null || !Categories.Contains(suggestion.category) ||
+            text != suggestion.quote?.Trim().TrimEnd('。','！','!') || text.Length is < 3 or > 160 ||
+            !Regex.IsMatch(text,"^(?:我|我的|以後回答|回答時請|請用)") || Hypothetical(text) ||
+            UnsafeMemory(text,suggestion.category=="互動禁忌") ||
+            Regex.IsMatch(text,"今天|現在|這次|暫時|可能|好像|也許|或許|不確定|外星|超人|神仙|魔王|總統|世界首富|[。；;\\n]|(?:他|她|別人|朋友)(?:也|有|養|喜歡|叫)")) return null;
+        string category = CategoryFor(text) ?? suggestion.category;
+        return Remember(text,category,false,now);
+    }
     public IReadOnlyList<ChatMessage> WithMemory(IReadOnlyList<ChatMessage> history, string question)
     {
         if (_state.Memories.Length == 0) return history;

@@ -1,4 +1,4 @@
 $ErrorActionPreference='Stop'
-$exe=Join-Path $PSScriptRoot 'EndfieldChargePlus.exe'
-if(!(Test-Path -LiteralPath $exe)){throw 'Run this script from an extracted portable release.'}
-Start-Process -FilePath $exe -WorkingDirectory $PSScriptRoot -WindowStyle Hidden
+$exe=Join-Path $env:LOCALAPPDATA 'Programs\EndfieldDynamicIsland\EndfieldChargePlus.exe'
+if(!(Test-Path -LiteralPath $exe)){throw 'Install Endfield Dynamic Island with the Windows setup program first.'}
+Start-Process -FilePath $exe -WorkingDirectory (Split-Path $exe) -WindowStyle Hidden

@@ -33,6 +33,9 @@ public partial class AssistantIslandWindow : Window
     private bool _closing;
     private int _hideGeneration;
     private readonly IBrush? _normalBackground, _normalOutline;
+    private PastedImage? _pastedImage;
+    private Avalonia.Media.Imaging.Bitmap? _previewBitmap;
+    private bool _readingImage;
     public event Action? IslandHidden;
     public event Action? MusicRequested;
     public event Action? MemoryRequested;
@@ -47,6 +50,7 @@ public partial class AssistantIslandWindow : Window
         InputBox.TextChanged += (_, _) => QueueLayout();
         LayoutUpdated += (_, _) => UpdateInputRegion();
         InputBox.AddHandler(KeyDownEvent, OnInputKey, RoutingStrategies.Tunnel);
+        RemoveImageButton.Click += (_,_) => ClearPastedImage();
         SendButton.Click += async (_, _) => { if (_busy) _request?.Cancel(); else await SendAsync(); };
         BodyHeader.PointerReleased += async (_, e) =>
         { if (e.InitialPressMouseButton == MouseButton.Left) { e.Handled = true; await HideAnimatedAsync(); } };
@@ -72,6 +76,7 @@ public partial class AssistantIslandWindow : Window
             _disposed = true;LocalizationManager.LanguageChanged-=ApplyLanguage;AvatarStore.Shared.Changed-=OnAvatarChanged;_hideGeneration++;_closing=false;IslandTransition.Cancel(this); _request?.Cancel(); _usageRequest?.Cancel(); _xngRequest?.Cancel();
             _hitTest?.Dispose(); _client.Dispose(); _xng.Dispose();
             _memoryPalace?.Close();
+            _previewBitmap?.Dispose();_pastedImage=null;
         };
         ApplyLanguage();
     }
@@ -87,6 +92,8 @@ public partial class AssistantIslandWindow : Window
         ModeCombo.ItemsSource=new[]{"自動","只聊天","只搜尋","搜尋＋AI"}.Select(choice=>new ComboBoxItem{Content=LocalizationManager.TranslateLiteral(choice)}).ToArray();
         ModeCombo.SelectedIndex=selectedMode;
         SendButton.Content=LocalizationManager.Text(_busy?"取消":"送出",_busy?"Cancel":"Send");
+        RemoveImageButton.Content=LocalizationManager.Text("移除","Remove");
+        UpdateImagePreviewText();
         StatusText.Text=LocalizationManager.TranslateLiteral(StatusText.Text);RenderConversation();QueueLayout();
     }
 
@@ -133,19 +140,55 @@ public partial class AssistantIslandWindow : Window
         _generation++; _request?.Cancel(); _busy = false;
         InputBox.IsEnabled = true; SendButton.Content = LocalizationManager.TranslateLiteral("送出");
         _session.Clear(); _visibleTurns = 20; InputBox.Text = "";
+        ClearPastedImage();
         StatusText.Text = _session.StorageNotice ?? "新對話 · Alt+A 喚出 · Shift+Enter 換行";
         RenderConversation(); QueueLayout(); InputBox.Focus();
     }
     private async void OnInputKey(object? sender, KeyEventArgs e)
     {
+        if(e.Key==Key.V&&e.KeyModifiers.HasFlag(KeyModifiers.Control)&&!_busy&&!_readingImage)
+        {
+            try
+            {
+                var encoded=ClipboardImage.ReadEncodedImage();
+                if(encoded is not null)
+                {
+                    e.Handled=true;_readingImage=true;int generation=_generation;
+                    var image=await Task.Run(()=>ClipboardImage.Normalize(encoded));
+                    if(!_disposed&&generation==_generation)SetPastedImage(image);
+                    return;
+                }
+            }
+            catch(Exception ex){e.Handled=true;StatusText.Text=ex is InvalidOperationException?ex.Message:LocalizationManager.Text("圖片無法貼上，請重新複製。","Unable to paste image. Copy it again.");}
+            finally{_readingImage=false;}
+        }
         if (e.Key != Key.Enter || e.KeyModifiers.HasFlag(KeyModifiers.Shift)) return;
         if (InputBox.GetVisualDescendants().OfType<TextPresenter>().Any(p => !string.IsNullOrEmpty(p.PreeditText))) return;
         e.Handled = true; if (!_busy) await SendAsync();
     }
+    public void SetPastedImage(PastedImage image)
+    {
+        var bitmap = new Avalonia.Media.Imaging.Bitmap(new System.IO.MemoryStream(Convert.FromBase64String(image.data)));
+        _previewBitmap?.Dispose();_previewBitmap=bitmap;_pastedImage=image;
+        PastedImagePreview.Source=bitmap;ImagePreviewFrame.IsVisible=true;
+        UpdateImagePreviewText();QueueLayout();
+    }
+    private void UpdateImagePreviewText()
+    {
+        ImagePreviewCaption.Text=_pastedImage is null?"":LocalizationManager.Text(
+            $"已貼上圖片 · {_pastedImage.Width} × {_pastedImage.Height}",
+            $"Pasted image · {_pastedImage.Width} × {_pastedImage.Height}");
+        ImagePreviewNotice.Text=LocalizationManager.Text("按送出才判讀 · 圖片不存入記憶","Analyzed only after Send · No image memory");
+    }
+    private void ClearPastedImage()
+    {
+        _pastedImage=null;PastedImagePreview.Source=null;_previewBitmap?.Dispose();_previewBitmap=null;
+        ImagePreviewFrame.IsVisible=false;QueueLayout();
+    }
     private async Task SendAsync()
     {
-        var question = InputBox.Text?.Trim();
-        if (_busy || _closing || string.IsNullOrWhiteSpace(question)) return;
+        var question = InputBox.Text?.Trim()??"";
+        if (_busy || _closing || _readingImage || (string.IsNullOrWhiteSpace(question)&&_pastedImage is null)) return;
         _request?.Dispose(); _request = new CancellationTokenSource();
         var token = _request.Token; var generation = _generation;
         _busy = true; InputBox.IsEnabled = false; SendButton.Content = LocalizationManager.TranslateLiteral("取消");
@@ -154,16 +197,34 @@ public partial class AssistantIslandWindow : Window
         try
         {
             var personal=_personal;
-            var local=personal.Handle(question,DateTimeOffset.Now);
-            if(local is null)
+            var attached=_pastedImage;
+            var local=attached is null?personal.Handle(question,DateTimeOffset.Now):null;
+            if(local is null&&attached is null)
             {
                 var memory=personal.ObserveSelfStatement(question,DateTimeOffset.Now);
                 if(memory is not null)local=new LocalAssistantResult($"已記住〔{memory.Category}〕{memory.Text}\n可以在右鍵 → 記憶宮殿修改或刪除。",memory.Id);
             }
             var reply = local is not null ? new AssistantReply(local.Text,"local",null,false,null,null,null)
-                : await _client.AskAsync(question, personal.WithMemory(_session.ModelHistory(),question), mode, token);
+                : await _client.AskAsync(question, personal.WithMemory(_session.ModelHistory(),question), mode, token,attached?.ToInput());
             if (generation != _generation || _disposed) return;
-            _session.Append(question, reply); InputBox.Text = ""; RenderConversation();
+            if (attached is null && reply.answer_kind == "model" && reply.memory_suggestions is { Length: > 0 })
+            {
+                try
+                {
+                    var saved = personal.AcceptModelSuggestion(question, reply.memory_suggestions[0], DateTimeOffset.Now);
+                    if (saved is not null) reply = reply with { text = reply.text + LocalizationManager.Text(
+                        $"\n\n已記住〔{saved.Category}〕{saved.Text}。可在記憶宮殿修改或刪除。",
+                        $"\n\nSaved to memory: {saved.Text}. You can edit or delete it in Memory Palace.") };
+                }
+                catch (InvalidOperationException ex)
+                {
+                    // Preserve the successful answer when the separate local save is blocked or fails.
+                    reply = reply with { text = reply.text + "\n\n" + ex.Message };
+                }
+                reply = reply with { memory_suggestions = null };
+            }
+            _session.Append(attached is null?question:(string.IsNullOrWhiteSpace(question)?LocalizationManager.Text("〔已貼上圖片〕","[Pasted image]"):question+LocalizationManager.Text("\n〔已附圖片〕","\n[Image attached]")), reply);
+            InputBox.Text = ""; ClearPastedImage(); RenderConversation();
             StatusText.Text = _session.StorageNotice ?? (reply.context?.reduced == true
                 ? $"已保留 {_session.Turns.Count} 輪 · 本次使用最近內容及相關舊對話節錄"
                 : reply.answer_kind == "local" ? LocalizationManager.TranslateLiteral("本機提醒／記憶 · 未使用 Gemini 額度")
@@ -272,7 +333,7 @@ public partial class AssistantIslandWindow : Window
         double contentWidth = Math.Max(80, bodyWidth - 30);
         BodyHeader.Measure(new Size(contentWidth, double.PositiveInfinity));
         FooterGrid.Measure(new Size(contentWidth, double.PositiveInfinity));
-        double chrome = BodyHeader.DesiredSize.Height + FooterGrid.DesiredSize.Height + 42 + 10 + (ReplyScroll.IsVisible ? 36 : 0);
+        double chrome = BodyHeader.DesiredSize.Height + FooterGrid.DesiredSize.Height + 42 + 10 + (ReplyScroll.IsVisible ? 36 : 0) + (ImagePreviewFrame.IsVisible?88:0);
         InputBox.Height = Math.Clamp(measured.Height + 24, 38, Math.Max(38, Math.Min(180, maxHeight - chrome - (ReplyScroll.IsVisible ? 40 : 0))));
         ReplyScroll.MaxHeight = Math.Max(0, maxHeight - chrome - InputBox.Height);
         var conversationWidth = Math.Max(80, bodyWidth - 88);

@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Avalonia;
 using EndfieldChargePlus.Assistant;
+if(args.Contains("--image-live-ui")){AppBuilder.Configure<PastedImageLiveApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
+if(args.Contains("--image-unit")){ImageInputProbe.Run();return;}
 if(args.Contains("--industrial-unit")){IndustrialFeatureProbe.Run();return;}
 if(args.Contains("--industrial-test")||args.Contains("--industrial-ui")){AppBuilder.Configure<IndustrialUiApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
 if(args.Contains("--collapse-test")||args.Contains("--collapse-ui")){AppBuilder.Configure<CollapseApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
