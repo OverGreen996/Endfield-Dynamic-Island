@@ -1,0 +1,86 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Styles.Resources>
+    <SolidColorBrush x:Key="Settings.Paper" Color="#E5E8E5"/>
+    <SolidColorBrush x:Key="Settings.Card" Color="#F5F6F2"/>
+    <SolidColorBrush x:Key="Settings.Ink" Color="#202728"/>
+    <SolidColorBrush x:Key="Settings.Secondary" Color="#535F60"/>
+    <SolidColorBrush x:Key="Settings.Rule" Color="#B9C2BF"/>
+  </Styles.Resources>
+  <Style Selector="Window.settingsShell Button:not(.caption)">
+    <Setter Property="CornerRadius" Value="2"/><Setter Property="Background" Value="#F5F6F2"/>
+    <Setter Property="Foreground" Value="#202728"/><Setter Property="BorderBrush" Value="#9DAAA7"/>
+    <Setter Property="BorderThickness" Value="1"/><Setter Property="FontSize" Value="13"/>
+  </Style>
+  <Style Selector="Window.settingsShell Button:not(.caption):pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#DBE9E7"/><Setter Property="Foreground" Value="#172526"/><Setter Property="BorderBrush" Value="#387986"/>
+  </Style>
+  <Style Selector="Window.settingsShell Button:not(.caption):pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="#C7DAD8"/><Setter Property="Foreground" Value="#172526"/>
+  </Style>
+  <Style Selector="Window.settingsShell Button.shellCommand"><Setter Property="Background" Value="#282F30"/><Setter Property="Foreground" Value="#EDF0EC"/><Setter Property="BorderBrush" Value="#535F60"/></Style>
+  <Style Selector="Window.settingsShell Button.shellCommand:pointerover /template/ ContentPresenter"><Setter Property="Background" Value="#354246"/><Setter Property="Foreground" Value="#EDF0EC"/></Style>
+  <Style Selector="Window.settingsShell Button.industrialPrimary:pointerover /template/ ContentPresenter"><Setter Property="Background" Value="#FFFF70"/><Setter Property="Foreground" Value="#202728"/></Style>
+  <Style Selector="Window.settingsShell TextBox"><Setter Property="CornerRadius" Value="2"/><Setter Property="Foreground" Value="#202728"/><Setter Property="Background" Value="#FFFFFF"/><Setter Property="BorderBrush" Value="#8E9D9A"/></Style>
+  <Style Selector="Window.settingsShell ComboBox"><Setter Property="CornerRadius" Value="2"/><Setter Property="Foreground" Value="#202728"/><Setter Property="Background" Value="#FFFFFF"/><Setter Property="BorderBrush" Value="#8E9D9A"/></Style>
+  <Style Selector="Window.settingsShell NumericUpDown"><Setter Property="Foreground" Value="#202728"/><Setter Property="Background" Value="#FFFFFF"/></Style>
+  <Style Selector="Window.settingsShell ToggleSwitch:checked:not(:disabled) /template/ Border#SwitchKnobBounds"><Setter Property="Background" Value="#1D6473"/><Setter Property="BorderBrush" Value="#1D6473"/></Style>
+  <Style Selector="Window.settingsShell ToggleSwitch:checked:pointerover:not(:disabled) /template/ Border#SwitchKnobBounds"><Setter Property="Background" Value="#387E8D"/><Setter Property="BorderBrush" Value="#387E8D"/></Style>
+  <Style Selector="Window.settingsShell Slider"><Setter Property="Foreground" Value="#1D6473"/></Style>
+  <Style Selector="Window.settingsShell Slider:not(:disabled) /template/ Thumb"><Setter Property="Background" Value="#1D6473"/></Style>
+  <Style Selector="Window.settingsShell Slider:pointerover:not(:disabled) /template/ Thumb"><Setter Property="Background" Value="#387E8D"/></Style>
+  <Style Selector="Window.settingsShell Border.settingsCard"><Setter Property="Background" Value="{DynamicResource Settings.Card}"/><Setter Property="BorderBrush" Value="{DynamicResource Settings.Rule}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="2"/><Setter Property="Padding" Value="22,20"/></Style>
+  <Style Selector="Window.settingsShell TextBlock.sectionHeading"><Setter Property="FontSize" Value="16"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Foreground" Value="{DynamicResource Settings.Ink}"/></Style>
+  <Style Selector="Window.settingsShell TabControl.moduleNav">
+    <Setter Property="ItemsPanel"><ItemsPanelTemplate><StackPanel Spacing="4"/></ItemsPanelTemplate></Setter>
+    <Setter Property="Template"><ControlTemplate>
+      <Grid Name="SettingsNavigationLayout" ColumnDefinitions="204,*">
+        <Border Background="#191F20" Padding="14,20,14,14" BorderBrush="#485354" BorderThickness="0,0,1,0">
+          <Grid RowDefinitions="Auto,*,Auto">
+            <StackPanel Name="SettingsNavigationBrand" Spacing="8" Margin="10,0,0,24">
+              <TextBlock Text="ENDFIELD" FontSize="17" FontWeight="Bold" LetterSpacing="2" Foreground="#F0F1EA"/>
+              <TextBlock Text="DYNAMIC ISLAND" FontSize="10" LetterSpacing="1.5" Foreground="#9EAEB0"/>
+              <Border Width="32" Height="3" HorizontalAlignment="Left" Background="#13C8EB" Margin="0,6,0,0"/>
+            </StackPanel>
+            <ItemsPresenter Name="PART_ItemsPresenter" Grid.Row="1" ItemsPanel="{TemplateBinding ItemsPanel}"/>
+            <StackPanel Name="SettingsNavigationFooter" Grid.Row="2" Spacing="8" Margin="10,20,0,0">
+              <Border Height="1" Background="#3C4849"/>
+              <TextBlock Text="PREFERENCES" FontSize="10" Foreground="#A9B4B1" LetterSpacing="1.7"/>
+            </StackPanel>
+          </Grid>
+        </Border>
+        <ThemeVariantScope Grid.Column="1" RequestedThemeVariant="Light">
+        <Border Background="{DynamicResource Settings.Paper}" Padding="28,24,24,0">
+          <Grid RowDefinitions="Auto,*">
+            <Border BorderBrush="#9CAAA7" BorderThickness="0,0,0,1" Padding="0,0,0,22" Margin="0,0,0,4">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="8">
+                  <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Border Width="18" Height="3" Background="#1D6473" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding SelectedItem.Tag.Label, RelativeSource={RelativeSource TemplatedParent}}" Foreground="#535F60" FontSize="11" LetterSpacing="1.5" VerticalAlignment="Center"/>
+                  </StackPanel>
+                  <TextBlock Text="{Binding SelectedItem.Header, RelativeSource={RelativeSource TemplatedParent}}" FontSize="30" FontWeight="Bold" Foreground="#202728" TextWrapping="Wrap"/>
+                </StackPanel>
+                <Grid Grid.Column="1" Width="92" Height="72" Margin="18,0,0,0" IsHitTestVisible="False">
+                  <TextBlock Text="{Binding SelectedItem.Tag.Number, RelativeSource={RelativeSource TemplatedParent}}" FontSize="62" FontWeight="Bold" FontFamily="Segoe UI" Foreground="#ABB7B3" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                  <Path Stroke="#1D6473" StrokeThickness="1" Data="M 0,0 L 12,0 M 0,0 L 0,12 M 92,60 L 92,72 L 80,72"/>
+                  <Path Stroke="#FFFA00" StrokeThickness="3" Data="M 60,70 L 84,70"/>
+                </Grid>
+              </Grid>
+            </Border>
+            <ContentPresenter Name="PART_SelectedContentHost" Grid.Row="1" Content="{TemplateBinding SelectedContent}" ContentTemplate="{TemplateBinding SelectedContentTemplate}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+          </Grid>
+        </Border>
+        </ThemeVariantScope>
+      </Grid>
+    </ControlTemplate></Setter>
+  </Style>
+  <Style Selector="Window.settingsShell TabControl.moduleNav &gt; TabItem">
+    <Setter Property="MinWidth" Value="0"/><Setter Property="MinHeight" Value="60"/><Setter Property="Padding" Value="12,12"/>
+    <Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="3,0,0,0"/><Setter Property="BorderBrush" Value="Transparent"/>
+    <Setter Property="Foreground" Value="#C6D0CE"/><Setter Property="Margin" Value="0"/>
+    <Setter Property="Template"><ControlTemplate><Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}"><ContentPresenter Name="PART_HeaderPresenter" Content="{TemplateBinding Header}" ContentTemplate="{TemplateBinding HeaderTemplate}" VerticalContentAlignment="Center"/></Border></ControlTemplate></Setter>
+  </Style>
+  <Style Selector="Window.settingsShell TabControl.moduleNav &gt; TabItem:selected"><Setter Property="Background" Value="#2B393D"/><Setter Property="Foreground" Value="#8DE1ED"/><Setter Property="BorderBrush" Value="#13C8EB"/></Style>
+  <Style Selector="Window.settingsShell TabControl.moduleNav &gt; TabItem:pointerover"><Setter Property="Background" Value="#253135"/></Style>
+  <Style Selector="Window.settingsShell TabControl.moduleNav &gt; TabItem:focus-visible"><Setter Property="BorderBrush" Value="#FFFA00"/></Style>
+</Styles>

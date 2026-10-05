@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Avalonia;
 using EndfieldChargePlus.Assistant;
+if(args.Contains("--settings-chrome")||args.Contains("--settings-ui")){Environment.ExitCode=AppBuilder.Configure<SettingsChromeApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
 if(args.Contains("--performance-baseline")){await StartupPerformanceProbe.BaselineAsync();return;}
 if(args.Contains("--performance-unit")){await StartupPerformanceProbe.UnitAsync();return;}
 if(args.Contains("--performance-monitor")){await StartupPerformanceProbe.MonitorAsync();return;}
@@ -8,7 +9,7 @@ if(args.Contains("--performance-ui")){AppBuilder.Configure<StartupPerformanceApp
 if(args.Contains("--image-live-ui")){AppBuilder.Configure<PastedImageLiveApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
 if(args.Contains("--image-unit")){ImageInputProbe.Run();return;}
 if(args.Contains("--industrial-unit")){IndustrialFeatureProbe.Run();return;}
-if(args.Contains("--industrial-test")||args.Contains("--industrial-ui")){AppBuilder.Configure<IndustrialUiApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
+if(args.Contains("--industrial-test")||args.Contains("--industrial-ui")){Environment.ExitCode=AppBuilder.Configure<IndustrialUiApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
 if(args.Contains("--collapse-test")||args.Contains("--collapse-ui")){AppBuilder.Configure<CollapseApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
 if(args.Contains("--personal-unit")){PersonalAssistantProbe.Run();return;}
 if(args.Contains("--all-edge-test")){AppBuilder.Configure<AllEdgeApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}

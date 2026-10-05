@@ -83,7 +83,7 @@ public sealed class IndustrialUiApplication:Application
                 Check(issues.Count==0,"all six English settings tabs contain translated static UI");
                 settings.MinWidth=0;settings.Width=720;tabs.SelectedIndex=0;await Task.Delay(150);Save(settings,folder,"settings-compact-English");
                 File.WriteAllText(Path.Combine(folder,"compact-bounds.json"),JsonSerializer.Serialize(new{width=settings.Width,window=settings.Bounds.ToString(),client=settings.ClientSize.ToString(),root=((Control)settings.Content!).Bounds.ToString(),rootDesired=((Control)settings.Content!).DesiredSize.ToString(),tabs=tabs.Bounds.ToString(),descendants=tabs.GetVisualDescendants().OfType<Control>().Take(20).Select(c=>new{type=c.GetType().Name,bounds=c.Bounds.ToString(),desired=c.DesiredSize.ToString()})},new JsonSerializerOptions{WriteIndented=true}));
-                Check(tabs.Classes.Contains("compact"),"compact navigation responds to narrow screen");
+                Check(tabs.Classes.Contains("settingsCompact"),"compact navigation responds to narrow screen");
                 Check(tabs.Bounds.X>=0&&tabs.Bounds.Right<=settings.ClientSize.Width,"narrow settings content stays inside window");
                 foreach(var buttonName in new[]{"LanguageChineseBtn","LanguageEnglishBtn","OpenSettingsFolderBtn","SaveBtn"}){var button=settings.FindControl<Button>(buttonName)!;var point=button.TranslatePoint(default,(Control)settings.Content!)!.Value;Check(point.X>=0&&point.X+button.Bounds.Width<=settings.ClientSize.Width&&point.Y+button.Bounds.Height<=tabs.Bounds.Y,"narrow header fits above module content: "+buttonName);}
                 settings.Width=1120;

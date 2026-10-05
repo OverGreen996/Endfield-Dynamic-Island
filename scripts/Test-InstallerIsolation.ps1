@@ -5,9 +5,9 @@ $testRoot=Join-Path ([IO.Path]::GetTempPath()) ('IslandInstallerVerification-'+[
 $hub=Join-Path $testRoot 'SharedHub';$app=Join-Path $testRoot 'App';$output=Join-Path $testRoot 'Setup'
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 $processBefore=(Get-NetTCPConnection -State Listen -LocalPort 8890 -ErrorAction SilentlyContinue).OwningProcess
-& $InnoCompiler '/Qp' "/DPayloadDir=$PayloadDir" "/DHubPayloadDir=$(Join-Path $PayloadDir 'SharedHubPayload')" '/DAppVersion=0.25.0' "/DOutputDir=$output" "/DHubDataDir=$hub" '/DSetupAppId=4A40BCD0-0126-4668-A981-18A378BD1F3D' '/DAppMutexName=Local\IslandInstallerVerification' '/DVerificationBuild=1' (Join-Path $sourceRoot 'installer\EndfieldIsland.iss')
+& $InnoCompiler '/Qp' "/DPayloadDir=$PayloadDir" "/DHubPayloadDir=$(Join-Path $PayloadDir 'SharedHubPayload')" '/DAppVersion=0.26.0' "/DOutputDir=$output" "/DHubDataDir=$hub" '/DSetupAppId=4A40BCD0-0126-4668-A981-18A378BD1F3D' '/DAppMutexName=Local\IslandInstallerVerification' '/DVerificationBuild=1' (Join-Path $sourceRoot 'installer\EndfieldIsland.iss')
 if($LASTEXITCODE -ne 0){throw 'Isolated installer compilation failed.'}
-$setup=Join-Path $output 'Endfield-Dynamic-Island-Setup-v0.25.0-win-x64.exe'
+$setup=Join-Path $output 'Endfield-Dynamic-Island-Setup-v0.26.0-win-x64.exe'
 for($i=0;$i -lt 2;$i++){
  $install=Start-Process -FilePath $setup -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/TASKS=',('/DIR="'+$app+'"'),('/LOG="'+(Join-Path $testRoot ('install-'+$i+'.log'))+'"')) -WindowStyle Hidden -PassThru -Wait
  if($install.ExitCode -ne 0){throw 'Isolated install/upgrade failed.'}

@@ -8,7 +8,7 @@
   #define HubDataDir "{userdocs}\ChatGPT\GeminiHub"
 #endif
 #ifndef AppVersion
-  #define AppVersion "0.25.0"
+  #define AppVersion "0.26.0"
 #endif
 #ifndef OutputDir
   #define OutputDir "..\artifacts\installer"

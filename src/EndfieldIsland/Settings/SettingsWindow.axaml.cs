@@ -19,6 +19,8 @@ using Avalonia;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.VisualTree;
+using Avalonia.Input;
+using Avalonia.Automation;
 
 namespace EndfieldChargePlus.Settings;
 
@@ -104,6 +106,7 @@ public partial class SettingsWindow : Window
 
         LocalizationManager.ApplyStaticText(this);
         RebuildLocalizedChoiceItems();
+        InitializeWindowChrome();
 
         LanguageChineseBtn.Click += (_, _) => OnLanguageSelected(AppLanguage.TraditionalChinese);
         LanguageEnglishBtn.Click += (_, _) => OnLanguageSelected(AppLanguage.English);
@@ -115,22 +118,29 @@ public partial class SettingsWindow : Window
             int index=moduleIndex++;string[] icons={"terminal","shield","bolt","monitor","activity","link"};
             tab.HeaderTemplate=new FuncDataTemplate<string>((caption,_)=>
             {
-                var header=new Grid{ColumnDefinitions=new ColumnDefinitions("24,*"),MinHeight=30};
+                var header=new Grid{ColumnDefinitions=new ColumnDefinitions("Auto,20,*"),MinHeight=30};
+                var number=new TextBlock{Text=$"{index+1:00}",FontFamily=new FontFamily("Consolas"),FontSize=10,Margin=new Thickness(0,0,8,0),Foreground=Brush.Parse("#A3B3B5"),VerticalAlignment=Avalonia.Layout.VerticalAlignment.Center,Tag="module-caption"};
                 var icon=new PathIcon{Width=20,Height=20,Data=IconCatalog.GetGeometry(icons[Math.Min(index,icons.Length-1)])};
                 if(index==2)icon.Data=Geometry.Parse("M 6,4 L 19,2 L 19,17 C 19,23 11,24 11,19 C 11,17 15,15 17,16 L 17,6 L 8,8 L 8,20 C 8,26 0,27 0,22 C 0,20 4,18 6,19 Z");
-                var label=new TextBlock{Text=caption,TextWrapping=TextWrapping.Wrap,VerticalAlignment=Avalonia.Layout.VerticalAlignment.Center,Margin=new Thickness(10,0,0,0),Tag="module-caption",IsVisible=Width>=760};
+                var label=new TextBlock{Text=caption,FontSize=13,FontWeight=FontWeight.SemiBold,TextWrapping=TextWrapping.Wrap,VerticalAlignment=Avalonia.Layout.VerticalAlignment.Center,Margin=new Thickness(8,0,0,0),Tag="module-caption",IsVisible=Width>=760};
                 label.Bind(TextBlock.ForegroundProperty,new Binding(nameof(TabItem.Foreground)){Source=tab});
                 icon.Bind(PathIcon.ForegroundProperty,new Binding(nameof(TabItem.Foreground)){Source=tab});
-                Grid.SetColumn(label,1);header.Children.Add(icon);header.Children.Add(label);ToolTip.SetTip(header,caption);return header;
+                Grid.SetColumn(icon,1);Grid.SetColumn(label,2);header.Children.Add(number);header.Children.Add(icon);header.Children.Add(label);ToolTip.SetTip(header,caption);return header;
             });
         }
         void SetNavigation()
         {
-            bool compact=Bounds.Width>0&&Bounds.Width<760;ModuleTabs.TabStripPlacement=Dock.Left;ModuleTabs.Classes.Set("compact",compact);
-            if(Bounds.Width>0){SettingsRoot.ColumnDefinitions[0].Width=new GridLength(Bounds.Width);ModuleTabs.Width=Math.Max(80,Bounds.Width-40);HeaderCommands.Width=Math.Max(80,Bounds.Width-48);}
+            double viewport=SettingsRoot.Bounds.Width>0?SettingsRoot.Bounds.Width:Width;
+            if(SettingsRoot.Bounds.Width>0 && SettingsRoot.ColumnDefinitions[0].Width!=new GridLength(viewport))SettingsRoot.ColumnDefinitions[0].Width=new GridLength(viewport);
+            ModuleTabs.Width=viewport;
+            bool compact=viewport<760;ModuleTabs.TabStripPlacement=Dock.Left;ModuleTabs.Classes.Set("settingsCompact",compact);
+            var layout=ModuleTabs.GetVisualDescendants().OfType<Grid>().FirstOrDefault(g=>g.Name=="SettingsNavigationLayout");
+            if(layout is not null && layout.ColumnDefinitions[0].Width.Value!=(compact?76:204))layout.ColumnDefinitions[0].Width=new GridLength(compact?76:204);
+            foreach(var brand in ModuleTabs.GetVisualDescendants().OfType<StackPanel>().Where(p=>p.Name is "SettingsNavigationBrand" or "SettingsNavigationFooter"))brand.IsVisible=!compact;
             foreach(var label in ModuleTabs.GetVisualDescendants().OfType<TextBlock>().Where(t=>t.Tag as string=="module-caption"))label.IsVisible=!compact;
         }
-        SizeChanged+=(_,_)=>SetNavigation();SetNavigation();
+        SizeChanged+=(_,_)=>SetNavigation();SettingsRoot.SizeChanged+=(_,_)=>Avalonia.Threading.Dispatcher.UIThread.Post(SetNavigation);SetNavigation();
+        ModuleTabs.SelectionChanged += (_, _) => UpdateWindowChrome();
         UpdateLanguageSwitchVisual();
 
         HudEnabledSwitch.IsCheckedChanged += (_, _) => UpdateModeUi();
@@ -281,6 +291,57 @@ public partial class SettingsWindow : Window
         if (positionIndex >= 0) PositionCombo.SelectedIndex = Math.Min(positionIndex, PositionCombo.Items.Count - 1);
     }
 
+    private void InitializeWindowChrome()
+    {
+        MinimizeSettingsBtn.Click += (_, _) => WindowState = WindowState.Minimized;
+        MaximizeSettingsBtn.Click += (_, _) => ToggleSettingsMaximize();
+        CloseSettingsBtn.Click += (_, _) => Close();
+        SettingsTitleDragArea.PointerPressed += (_, e) =>
+        {
+            if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+            if (e.ClickCount == 2) ToggleSettingsMaximize();
+            else BeginMoveDrag(e);
+            e.Handled = true;
+        };
+        PropertyChanged += (_, e) =>
+        {
+            if (e.Property == WindowStateProperty) UpdateWindowChrome();
+        };
+        UpdateWindowChrome();
+    }
+
+    private void ToggleSettingsMaximize()
+    {
+        if (CanResize) WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+    }
+
+    private void UpdateWindowChrome()
+    {
+        bool maximized = WindowState == WindowState.Maximized;
+        void Caption(Button button, string text)
+        {
+            AutomationProperties.SetName(button, text);
+            ToolTip.SetTip(button, text);
+        }
+        Caption(MinimizeSettingsBtn, LocalizationManager.Text("最小化", "Minimize"));
+        Caption(MaximizeSettingsBtn, maximized ? LocalizationManager.Text("還原視窗", "Restore window") : LocalizationManager.Text("最大化", "Maximize"));
+        Caption(CloseSettingsBtn, LocalizationManager.Text("關閉設定", "Close settings"));
+        MaximizeSettingsIcon.Data = Geometry.Parse(maximized
+            ? "M 3,0 L 12,0 L 12,9 L 10,9 L 10,2 L 3,2 Z M 0,3 L 9,3 L 9,12 L 0,12 Z M 1,4 L 1,11 L 8,11 L 8,4 Z"
+            : "M 0,0 L 12,0 L 12,12 L 0,12 Z M 1,1 L 1,11 L 11,11 L 11,1 Z");
+        SettingsSectionTitle.Text = (ModuleTabs.SelectedItem as TabItem)?.Header as string
+            ?? LocalizationManager.Text("設定", "Settings");
+        string[] sectionLabels={"ASSISTANT","NOTIFICATIONS","AUDIO","DISPLAY","HUD EDITOR","ABOUT"};
+        int sectionIndex=0;
+        foreach(var tab in ModuleTabs.Items.OfType<TabItem>())
+        {
+            var section=new SettingsSection($"{sectionIndex+1:00}",sectionLabels[sectionIndex++]);
+            if(tab.Tag is not SettingsSection previous || previous!=section)tab.Tag=section;
+        }
+    }
+
+    public sealed record SettingsSection(string Number,string Label);
+
     private async void OnLanguageSelected(AppLanguage language)
     {
         string preference = LocalizationManager.PreferenceFor(language);
@@ -306,6 +367,7 @@ public partial class SettingsWindow : Window
     {
         EndfieldBrandMark.Data=(Geometry)this.FindResource("Geo.Endfield.Industries")!;
         LocalizationManager.ApplyStaticText(this);
+        UpdateWindowChrome();
         _ = RefreshGeminiUsageAsync();RefreshNotificationStatus();
         RebuildLocalizedChoiceItems();
         if (_monitorComboReady)
