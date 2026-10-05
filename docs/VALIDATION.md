@@ -97,3 +97,5 @@ GitHub Actions 執行建置與五類隔離邏輯檢查。完整桌面測試可�
 - 聚合採最忙引擎，參考 [Microsoft GPU 計量說明](https://devblogs.microsoft.com/directx/gpus-in-the-task-manager/)。
 
 19 類全套回歸重跑共 1213/1213 PASS（原 1196 加 GPU 17），所有日誌拒絕 FAIL／Unhandled exception 並檢查退出碼。
+
+使用者提供工作管理員截圖後，另核對精確 PCI 裝置登錄中的 HardwareInformation.qwMemorySize=12884901888 bytes（12 GiB）；DXGI 11.80 GiB 不包含約 202 MiB 驅動保留區。加入唯讀且可選的裝置驅動容量來源，不掃描其他裝置代替、不使用截斷的 32 位元 MemorySize。修正後實機五次讀值 17～25%、專用使用 1.94～1.97 GiB、容量 12.00 GiB。無登錄值／權限則保持 DXGI 回退；沒有改登錄或顯卡設定。

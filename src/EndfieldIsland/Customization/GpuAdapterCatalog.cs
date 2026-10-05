@@ -5,6 +5,7 @@ using System.Linq;
 using System.Management;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using Microsoft.Win32;
 
 namespace EndfieldChargePlus.Customization;
 
@@ -170,6 +171,9 @@ public static class GpuAdapterCatalog
         double dedicated = Math.Max(
             Math.Max(0, group.DedicatedMemoryBytes),
             Math.Max(0, controller?.AdapterRamBytes ?? 0));
+        // DXGI may exclude a driver-reserved framebuffer (e.g. 202 MB on a 12 GB card).
+        // Prefer the exact PCI device's 64-bit physical-memory report when present.
+        dedicated = Math.Max(dedicated, ReadPhysicalVram(controller?.PnpDeviceId));
 
         var legacy = group.Candidates.Select(x => x.Id)
             .Concat(string.IsNullOrWhiteSpace(controller?.PnpDeviceId)
@@ -186,6 +190,22 @@ public static class GpuAdapterCatalog
             group.SharedMemoryBytes,
             group.PerfLuidTokens,
             legacy);
+    }
+
+    private static double ReadPhysicalVram(string? pnpDeviceId)
+    {
+        if (pnpDeviceId is null || !pnpDeviceId.StartsWith("PCI\\", StringComparison.OrdinalIgnoreCase)) return 0;
+        try
+        {
+            using var device=Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Enum\"+pnpDeviceId);
+            if(device?.GetValue("Driver") is not string driver ||
+               !Regex.IsMatch(driver,@"^\{4d36e968-e325-11ce-bfc1-08002be10318\}\\\d{4}$",RegexOptions.IgnoreCase))return 0;
+            using var display=Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Class\"+driver);
+            object? raw=display?.GetValue("HardwareInformation.qwMemorySize");
+            double bytes=raw switch {long n=>n,byte[] data when data.Length==8=>BitConverter.ToUInt64(data),_=>0};
+            return bytes>=256d*1024*1024 && bytes<=1024d*1073741824 ? bytes : 0;
+        }
+        catch { return 0; } // Optional driver metadata; DXGI stays the safe fallback.
     }
 
     private static IReadOnlyList<DxgiGroup> FindMatchingGroups(
