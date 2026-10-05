@@ -2,6 +2,7 @@ using System.Text.Json;
 using Avalonia;
 using EndfieldChargePlus.Assistant;
 if(args.Contains("--gpu-live")){await GpuTelemetryProbe.LiveAsync();return;}
+if(args.Contains("--gpu-live-ui")){Environment.ExitCode=AppBuilder.Configure<GpuLiveApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
 if(args.Contains("--gpu-unit")){GpuTelemetryProbe.Unit();return;}
 if(args.Contains("--settings-chrome")||args.Contains("--settings-ui")){Environment.ExitCode=AppBuilder.Configure<SettingsChromeApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
 if(args.Contains("--performance-baseline")){await StartupPerformanceProbe.BaselineAsync();return;}

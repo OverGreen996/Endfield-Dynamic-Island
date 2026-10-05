@@ -99,3 +99,6 @@ GitHub Actions 執行建置與五類隔離邏輯檢查。完整桌面測試可�
 19 類全套回歸重跑共 1213/1213 PASS（原 1196 加 GPU 17），所有日誌拒絕 FAIL／Unhandled exception 並檢查退出碼。
 
 使用者提供工作管理員截圖後，另核對精確 PCI 裝置登錄中的 HardwareInformation.qwMemorySize=12884901888 bytes（12 GiB）；DXGI 11.80 GiB 不包含約 202 MiB 驅動保留區。加入唯讀且可選的裝置驅動容量來源，不掃描其他裝置代替、不使用截斷的 32 位元 MemorySize。修正後實機五次讀值 17～25%、專用使用 1.94～1.97 GiB、容量 12.00 GiB。無登錄值／權限則保持 DXGI 回退；沒有改登錄或顯卡設定。
+
+追加實機 HUD 渲染：第二筆取樣 CPU 17%、GPU 14%、VRAM 1.9/12.0 GiB；GPU 標籤 Utilization，沒有 UNDEFINED。原生桌面工具兩次無法 activate captured window，改由隔離 Avalonia fixture 使用同一 HUD 元件與真實 VariableHub 資料輸出；不是直接擷取使用者桌面，也未證明舊 UNDEFINED 截圖的來源。
+隔離 v0.26.0 安裝／升級／解除安裝通過，保留共享帳本、憑證與資料；其後只補正同版 GPU 容量讀取。最終安裝 payload 的 EXE／DLL 雜湊核對，個人資料檔案升級前後雜湊比對。
