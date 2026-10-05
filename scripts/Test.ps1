@@ -5,7 +5,7 @@ New-Item -ItemType Directory -Path (Join-Path $root 'outputs') -Force | Out-Null
 & $Dotnet build (Join-Path $root 'tests\IslandRegression\IslandRegression.csproj') -c Release
 if($LASTEXITCODE -ne 0){throw 'Regression build failed.'}
 $dll=Join-Path $root 'tests\IslandRegression\bin\Release\net8.0-windows10.0.19041.0\IslandRegression.dll'
-$flags=@('--unit','--bubble-layout','--music-unit','--notification-unit','--personal-unit','--image-unit','--notification-monitor','--music-layout','--all-ui-layout','--all-edge-test','--music-edge-test','--collapse-test','--industrial-unit','--notification-routing','--industrial-test','--performance-unit','--performance-ui','--settings-chrome')
+$flags=@('--unit','--bubble-layout','--music-unit','--notification-unit','--personal-unit','--image-unit','--notification-monitor','--music-layout','--all-ui-layout','--all-edge-test','--music-edge-test','--collapse-test','--industrial-unit','--notification-routing','--industrial-test','--performance-unit','--performance-ui','--settings-chrome','--gpu-unit')
 $results=Join-Path $root 'TestResults';New-Item -ItemType Directory -Path $results -Force | Out-Null
 Push-Location $root
 try {

@@ -84,14 +84,14 @@ public sealed class VariableHub : IDisposable
     private IReadOnlyList<string> _cachedGpuPerfLuidTokens = Array.Empty<string>();
     private double _cachedGpuVramBytes;
     private double _cachedGpuSharedLimitBytes;
-    private double _cachedGpuUsage;
-    private double _cachedGpuUsage3D;
-    private double _cachedGpuUsageCompute;
-    private double _cachedGpuUsageCopy;
-    private double _cachedGpuUsageVideoDecode;
-    private double _cachedGpuUsageVideoEncode;
-    private double _cachedGpuDedicatedBytes;
-    private double _cachedGpuSharedBytes;
+    private double _cachedGpuUsage = double.NaN;
+    private double _cachedGpuUsage3D = double.NaN;
+    private double _cachedGpuUsageCompute = double.NaN;
+    private double _cachedGpuUsageCopy = double.NaN;
+    private double _cachedGpuUsageVideoDecode = double.NaN;
+    private double _cachedGpuUsageVideoEncode = double.NaN;
+    private double _cachedGpuDedicatedBytes = double.NaN;
+    private double _cachedGpuSharedBytes = double.NaN;
     private DateTime _nextGpuInfoRead = DateTime.MinValue;
     private DateTime _nextGpuUsageRead = DateTime.MinValue;
     private AppLanguage _lastLanguage = LocalizationManager.Current;
@@ -637,14 +637,14 @@ public sealed class VariableHub : IDisposable
             _cachedGpuPerfLuidTokens = selected.PerfLuidTokens.ToArray();
             _cachedGpuVramBytes = selected.DedicatedMemoryBytes;
             _cachedGpuSharedLimitBytes = selected.SharedMemoryBytes;
-            _cachedGpuUsage = 0;
-            _cachedGpuUsage3D = 0;
-            _cachedGpuUsageCompute = 0;
-            _cachedGpuUsageCopy = 0;
-            _cachedGpuUsageVideoDecode = 0;
-            _cachedGpuUsageVideoEncode = 0;
-            _cachedGpuDedicatedBytes = 0;
-            _cachedGpuSharedBytes = 0;
+            _cachedGpuUsage = double.NaN;
+            _cachedGpuUsage3D = double.NaN;
+            _cachedGpuUsageCompute = double.NaN;
+            _cachedGpuUsageCopy = double.NaN;
+            _cachedGpuUsageVideoDecode = double.NaN;
+            _cachedGpuUsageVideoEncode = double.NaN;
+            _cachedGpuDedicatedBytes = double.NaN;
+            _cachedGpuSharedBytes = double.NaN;
             _nextGpuInfoRead = DateTime.MinValue;
             _nextGpuUsageRead = DateTime.MinValue;
         }
@@ -672,56 +672,24 @@ public sealed class VariableHub : IDisposable
 
             try
             {
-                // GPU Engine exposes one entry per process/engine. Sum processes that use the
-                // same engine, then use the busiest engine as the overall utilization, which
-                // closely follows Task Manager and also covers Compute/Copy/Video engines.
-                var engineTotals = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-                var typeTotals = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+                var rows = new List<GpuEngineCounter>();
                 using var engineSearcher = new ManagementObjectSearcher(
                     "root\\CIMV2",
                     "SELECT Name, UtilizationPercentage FROM Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine");
                 foreach (ManagementObject mo in engineSearcher.Get())
                 {
                     string name = Convert.ToString(mo["Name"]) ?? "";
-                    if (!MatchesSelectedGpuCounter(name)) continue;
-
-                    double utilization = ToDoubleSafe(mo["UtilizationPercentage"]);
-                    var engine = Regex.Match(name, @"(?:^|_)eng_(?<engine>\d+)_engtype_(?<type>[^_]+)", RegexOptions.IgnoreCase);
-                    var luid = Regex.Match(name, @"luid_0x[0-9a-f]+_0x[0-9a-f]+", RegexOptions.IgnoreCase);
-                    string adapterKey = luid.Success ? luid.Value : $"phys:{_cachedGpuPhysicalIndex}";
-                    string type = engine.Success ? engine.Groups["type"].Value : "Other";
-                    string engineKey = engine.Success
-                        ? $"{engine.Groups["engine"].Value}:{type}"
-                        : name;
-                    string key = $"{adapterKey}|{engineKey}";
-                    engineTotals[key] = engineTotals.TryGetValue(key, out var oldValue)
-                        ? oldValue + utilization
-                        : utilization;
-
-                    string typeKey = $"{adapterKey}|{type}";
-                    typeTotals[typeKey] = typeTotals.TryGetValue(typeKey, out var oldTypeValue)
-                        ? oldTypeValue + utilization
-                        : utilization;
+                    if (mo["UtilizationPercentage"] is not null)
+                        rows.Add(new(name, Convert.ToDouble(mo["UtilizationPercentage"])));
                 }
-
-                // Duplicate logical DXGI views of one physical GPU can expose equivalent engine
-                // rows under different LUIDs. Using the busiest physical-engine view avoids
-                // triple-counting those aliases while still matching Task Manager semantics.
-                _cachedGpuUsage = engineTotals.Count == 0
-                    ? 0d
-                    : Math.Clamp(engineTotals.Values.Max(), 0d, 100d);
-                _cachedGpuUsage3D = MaxGpuType(typeTotals, "3D");
-                _cachedGpuUsageCompute = Math.Max(MaxGpuType(typeTotals, "Compute_0"), MaxGpuType(typeTotals, "Compute_1"));
-                _cachedGpuUsageCopy = MaxGpuType(typeTotals, "Copy");
-                _cachedGpuUsageVideoDecode = Math.Max(MaxGpuType(typeTotals, "VideoDecode"), MaxGpuType(typeTotals, "Video_Decode"));
-                _cachedGpuUsageVideoEncode = Math.Max(MaxGpuType(typeTotals, "VideoEncode"), MaxGpuType(typeTotals, "Video_Encode"));
+                ApplyGpuEngineSample(GpuEngineSample.Aggregate(rows, _cachedGpuPerfLuidTokens, _cachedGpuPhysicalIndex));
             }
-            catch { }
+            catch { ApplyGpuEngineSample(GpuEngineSample.Unavailable); }
 
             try
             {
-                double dedicated = 0;
-                double shared = 0;
+                double dedicated = double.NaN;
+                double shared = double.NaN;
                 using var memSearcher = new ManagementObjectSearcher(
                     "root\\CIMV2",
                     "SELECT Name, DedicatedUsage, SharedUsage FROM Win32_PerfFormattedData_GPUPerformanceCounters_GPUAdapterMemory");
@@ -732,13 +700,21 @@ public sealed class VariableHub : IDisposable
                     // One physical adapter may be represented by multiple logical DXGI/LUID
                     // aliases. GPUAdapterMemory reports the same physical usage for such aliases,
                     // so take the maximum instead of summing duplicate rows.
-                    dedicated = Math.Max(dedicated, Convert.ToDouble(mo["DedicatedUsage"] ?? 0));
-                    shared = Math.Max(shared, Convert.ToDouble(mo["SharedUsage"] ?? 0));
+                    if (mo["DedicatedUsage"] is not null)
+                    {
+                        double n=Convert.ToDouble(mo["DedicatedUsage"]);
+                        if(double.IsFinite(n)&&n>=0)dedicated=double.IsNaN(dedicated)?n:Math.Max(dedicated,n);
+                    }
+                    if (mo["SharedUsage"] is not null)
+                    {
+                        double n=Convert.ToDouble(mo["SharedUsage"]);
+                        if(double.IsFinite(n)&&n>=0)shared=double.IsNaN(shared)?n:Math.Max(shared,n);
+                    }
                 }
                 _cachedGpuDedicatedBytes = Math.Max(0, dedicated);
                 _cachedGpuSharedBytes = Math.Max(0, shared);
             }
-            catch { }
+            catch { _cachedGpuDedicatedBytes = _cachedGpuSharedBytes = double.NaN; }
         }
 
         double dedicatedTotal = Math.Max(0, _cachedGpuVramBytes);
@@ -784,19 +760,18 @@ public sealed class VariableHub : IDisposable
         v["gpu.uses_unified_memory"] = selected?.UsesUnifiedMemory ?? false;
     }
 
-    private bool MatchesSelectedGpuCounter(string counterName)
+    private void ApplyGpuEngineSample(GpuEngineSample sample)
     {
-        if (_cachedGpuPerfLuidTokens.Any(token =>
-                !string.IsNullOrWhiteSpace(token)
-                && counterName.Contains(token, StringComparison.OrdinalIgnoreCase)))
-            return true;
-
-        // Fallback for systems/drivers where DXGI LUID is not surfaced in the WMI instance name.
-        return Regex.IsMatch(
-            counterName,
-            $@"(?:^|_)phys_{_cachedGpuPhysicalIndex}(?:_|$)",
-            RegexOptions.IgnoreCase);
+        _cachedGpuUsage=sample.Usage;
+        _cachedGpuUsage3D=sample.ThreeD;
+        _cachedGpuUsageCompute=sample.Compute;
+        _cachedGpuUsageCopy=sample.Copy;
+        _cachedGpuUsageVideoDecode=sample.Decode;
+        _cachedGpuUsageVideoEncode=sample.Encode;
     }
+
+    private bool MatchesSelectedGpuCounter(string counterName) =>
+        GpuEngineSample.Matches(counterName, _cachedGpuPerfLuidTokens, _cachedGpuPhysicalIndex);
 
     private async Task AddPingAsync(
         IDictionary<string, object?> v,
@@ -1416,18 +1391,6 @@ public sealed class VariableHub : IDisposable
             12 => "ARM64",
             _ => RuntimeInformation.ProcessArchitecture.ToString()
         };
-    }
-
-    private static double MaxGpuType(IReadOnlyDictionary<string, double> totals, string type)
-    {
-        double max = 0d;
-        string suffix = "|" + type;
-        foreach (var pair in totals)
-        {
-            if (pair.Key.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
-                max = Math.Max(max, pair.Value);
-        }
-        return Math.Clamp(max, 0d, 100d);
     }
 
     private static string DayOfWeekZh(DayOfWeek day) => LocalizationManager.IsEnglish

@@ -1,10 +1,10 @@
-# Endfield Dynamic Island
+﻿# Endfield Dynamic Island
 
 ![Endfield Dynamic Island](docs/assets/hero.png)
 
 A Windows desktop island for AI conversations, music, notifications and system telemetry. Graphite panels, cyan information and restrained yellow accents draw on Endfield's industrial visual language.
 
-v0.26.0 redesigns the settings window with an integrated titlebar, indexed navigation, silver panels and clear section hierarchy. Chinese and English interfaces retain their controls; island presentation and backend logic are unchanged. [Design and validation](docs/SETTINGS-DESIGN.md).
+v0.26.0 redesigns the settings window with an integrated titlebar, indexed navigation, silver panels and clear section hierarchy. Chinese and English interfaces retain their controls; island presentation and search/model backend logic are unchanged. GPU sampling now distinguishes missing counters from measured zero and isolates adapter LUIDs. [Design and validation](docs/SETTINGS-DESIGN.md).
 
 ![Redesigned settings window](docs/assets/settings-v026.png)
 
