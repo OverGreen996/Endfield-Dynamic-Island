@@ -95,3 +95,5 @@ GitHub Actions 執行建置與五類隔離邏輯檢查。完整桌面測試可�
 - 17 項新增回歸涵蓋真實零值／不可用、混合顯卡、程序加總、邏輯別名、Compute／Video 引擎和 HUD 缺值呈現。缺失／查詢失敗改為不可用，下一次約 700 ms 後可再取樣；不重設使用者設定、不修改驅動或 Windows 計數器。
 - Kent RTX 3080 Ti 實測五次 21～23%，顯存 1.86～1.87 GB，實體容量 11.80 GB。這是驗證當下負載，不是固定值；沒有啟動壓力測試。
 - 聚合採最忙引擎，參考 [Microsoft GPU 計量說明](https://devblogs.microsoft.com/directx/gpus-in-the-task-manager/)。
+
+19 類全套回歸重跑共 1213/1213 PASS（原 1196 加 GPU 17），所有日誌拒絕 FAIL／Unhandled exception 並檢查退出碼。

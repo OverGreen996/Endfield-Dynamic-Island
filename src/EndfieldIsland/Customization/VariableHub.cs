@@ -758,6 +758,11 @@ public sealed class VariableHub : IDisposable
         v["gpu.total_memory_limit_bytes"] = totalLimit;
         v["gpu.total_memory_usage"] = totalLimit <= 0d ? 0d : Math.Clamp(totalUsed / totalLimit * 100d, 0d, 100d);
         v["gpu.uses_unified_memory"] = selected?.UsesUnifiedMemory ?? false;
+        // Missing keys use the existing template placeholder in every GPU HUD, including
+        // custom profiles; do not leak NaN text into a percentage or memory label.
+        foreach (var key in v.Where(x => x.Key.StartsWith("gpu.", StringComparison.OrdinalIgnoreCase)
+                                        && x.Value is double number && !double.IsFinite(number)).Select(x => x.Key).ToArray())
+            v.Remove(key);
     }
 
     private void ApplyGpuEngineSample(GpuEngineSample sample)
