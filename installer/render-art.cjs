@@ -17,11 +17,11 @@ const sidebar=`<svg xmlns="http://www.w3.org/2000/svg" width="656" height="1256"
 <text x="28" y="66" font-size="11" letter-spacing="2" fill="#c6d6d6">DESKTOP SYSTEM</text>
 <path d="M28 86H98" stroke="#e6e744" stroke-width="3"/><text x="273" y="94" font-size="24" fill="#13c8eb">↗</text>
 ${mark(28,155,272)}
-<path d="M28 437H300" stroke="#526165"/><text x="28" y="466" font-size="11" fill="#8de1ed" letter-spacing="1.5">DYNAMIC ISLAND / 023</text>
+<path d="M28 437H300" stroke="#526165"/><text x="28" y="466" font-size="11" fill="#8de1ed" letter-spacing="1.5">DYNAMIC ISLAND</text>
 <text x="28" y="493" font-size="10" fill="#a2b2b2" letter-spacing="1">ASSISTANT · MUSIC · SYSTEM</text>
 <path d="M28 533H51M58 533H157" stroke="#e6e744" stroke-width="2"/>
 <text x="28" y="569" font-size="10" fill="#97aaad" letter-spacing="1">BUILT FOR YOUR DESKTOP.</text>
-<text x="28" y="594" font-size="9" fill="#8de1ed" letter-spacing="2">WINDOWS / X64 / 0.23.0</text></g>
+<text x="28" y="594" font-size="9" fill="#8de1ed" letter-spacing="2">WINDOWS / X64</text></g>
 <path d="M296 562v42h-32" stroke="#13c8eb" fill="none" stroke-width="2"/></svg>`;
 const header=`<svg xmlns="http://www.w3.org/2000/svg" width="360" height="120" viewBox="0 0 180 60">
 <rect width="180" height="60" fill="#13c8eb"/><path d="M12 0H22V10H12ZM0 25H10V35H0ZM12 50H22V60H12Z" fill="#253e45"/>

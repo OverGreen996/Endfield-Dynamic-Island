@@ -19,6 +19,8 @@ public sealed record HudProfile
     // Built-in profiles are shipped with the application and are read-only.
     public bool IsBuiltIn { get; init; } = false;
     public string BuiltInKey { get; init; } = "";
+    // Presentation is independent of preset identity so editable copies keep their metric layout.
+    public string PresentationLayout { get; init; } = ""; // empty: templates | SystemOverview: CPU/GPU/VRAM/RAM
 
     // Category/Name are retained internally for migration and built-in identity.
     // The settings UI presents one merged scheme name such as “系統 - CPU”.
@@ -117,8 +119,8 @@ public sealed record CustomHudSettings
     {
         new()
         {
-            IsBuiltIn=true, BuiltInKey="system.overview", Category="系統", Name="效能總覽",
-            AnimationMode="Simple", TaglineTemplate="/// SYSTEM TELEMETRY", TitleTemplate="效能總覽",
+            IsBuiltIn=true, BuiltInKey="system.overview", PresentationLayout="SystemOverview", Category="系統", Name="效能總覽",
+            AnimationMode="Full", TaglineTemplate="/// SYSTEM TELEMETRY", TitleTemplate="效能總覽",
             PrimaryTemplate="", SecondaryTemplate="", RightTemplate="", RightSuffix="",
             ProgressVariable="cpu.usage", LeftIcon="cpu", RightIcon="gpu"
         },

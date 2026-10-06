@@ -18,17 +18,17 @@ namespace EndfieldChargePlus.Views;
 
 public partial class AssistantIslandWindow : Window
 {
-    private readonly AssistantHubClient _client = new();
-    private readonly XngPluginClient _xng = new();
+    private readonly AssistantClient _client = new();
     private readonly AssistantSession _session;
     private readonly PersonalAssistantStore _personal;
     private WindowsHudHitTest? _hitTest;
     private readonly PaintedIslandRegion _paintedRegion = new();
-    private CancellationTokenSource? _request, _usageRequest, _xngRequest;
+    private CancellationTokenSource? _request, _usageRequest, _searchRequest;
     private AppSettings _settings = new();
     private bool _busy, _layoutPending, _disposed;
     private int _generation, _visibleTurns = 20;
     private MemoryPalaceWindow? _memoryPalace;
+    private SearchSettingsWindow? _searchSettings;
     private Task? _hideAnimation;
     private bool _closing;
     private int _hideGeneration;
@@ -44,6 +44,7 @@ public partial class AssistantIslandWindow : Window
     {
         _personal=personal??PersonalAssistantStore.Shared;_session=session??new AssistantSession();
         InitializeComponent();
+        _replyTimer.Tick+=OnReplyFrame;PropertyChanged+=OnReplyVisibilityChanged;
         LocalizationManager.LanguageChanged+=ApplyLanguage;
         AvatarStore.Shared.Changed+=OnAvatarChanged;
         _normalBackground=Island.Background;_normalOutline=Island.BorderBrush;
@@ -62,10 +63,10 @@ public partial class AssistantIslandWindow : Window
             _memoryPalace.Show();_memoryPalace.Activate();
         };
         UsageItem.Click += async (_, _) => await RefreshUsageAsync();
-        XngStatusItem.Click += async (_, _) => await RefreshXngAsync();
-        XngManagerItem.Click += async (_, _) =>
+        SearchStatusItem.Click += async (_, _) => await RefreshSearchAsync();
+        SearchSettingsItem.Click += (_, _) =>
         {
-            try { using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(6)); await _xng.OpenManagerAsync(timeout.Token); }
+            try { if(_searchSettings is null){_searchSettings=new SearchSettingsWindow();_searchSettings.Closed+=(_,_)=>_searchSettings=null;} _searchSettings.Show();_searchSettings.Activate(); }
             catch (Exception ex) { StatusText.Text = ex.Message; QueueLayout(); }
         };
         MusicItem.Click += (_, _) => MusicRequested?.Invoke();
@@ -73,14 +74,16 @@ public partial class AssistantIslandWindow : Window
         KeyDown += async (_, e) => { if (e.Key == Key.Escape) { e.Handled = true; await HideAnimatedAsync(); } };
         Closed += (_, _) =>
         {
-            _disposed = true;LocalizationManager.LanguageChanged-=ApplyLanguage;AvatarStore.Shared.Changed-=OnAvatarChanged;_hideGeneration++;_closing=false;IslandTransition.Cancel(this); _request?.Cancel(); _usageRequest?.Cancel(); _xngRequest?.Cancel();
-            _hitTest?.Dispose(); _client.Dispose(); _xng.Dispose();
+            _disposed = true;LocalizationManager.LanguageChanged-=ApplyLanguage;AvatarStore.Shared.Changed-=OnAvatarChanged;_hideGeneration++;_closing=false;IslandTransition.Cancel(this); _request?.Cancel(); _usageRequest?.Cancel(); _searchRequest?.Cancel();
+            ResetReplyReveal();_replyTimer.Tick-=OnReplyFrame;PropertyChanged-=OnReplyVisibilityChanged;
+            _hitTest?.Dispose(); _client.Dispose();
             _memoryPalace?.Close();
+            _searchSettings?.Close();
             _previewBitmap?.Dispose();_pastedImage=null;
         };
         ApplyLanguage();
     }
-    private void OnAvatarChanged()=>Dispatcher.UIThread.Post(()=>{if(!_disposed){RenderConversation();QueueLayout();}});
+    private void OnAvatarChanged()=>Dispatcher.UIThread.Post(()=>{if(!_disposed){RenderConversation(false);QueueLayout();}});
     private void ApplyLanguage()
     {
         EndfieldBrandMark.Data=(Geometry)this.FindResource(LocalizationManager.IsEnglish?"Geo.Endfield.Icon.en":"Geo.Endfield.Icon.zh")!;
@@ -94,7 +97,7 @@ public partial class AssistantIslandWindow : Window
         SendButton.Content=LocalizationManager.Text(_busy?"取消":"送出",_busy?"Cancel":"Send");
         RemoveImageButton.Content=LocalizationManager.Text("移除","Remove");
         UpdateImagePreviewText();
-        StatusText.Text=LocalizationManager.TranslateLiteral(StatusText.Text);RenderConversation();QueueLayout();
+        StatusText.Text=LocalizationManager.TranslateLiteral(StatusText.Text);RenderConversation(false);QueueLayout();
     }
 
     public void ShowInput(AppSettings settings)
@@ -102,13 +105,14 @@ public partial class AssistantIslandWindow : Window
         if(_closing){_hideGeneration++;_closing=false;_hideAnimation=null;IslandTransition.Cancel(this);ResetCloseAppearance();}
         _settings = settings; ShowActivated = true; RefreshLayout();
         if (!IsVisible) Show();
+        ResumeReplyReveal();
         PositionIsland(); EnsureHitTest(); Activate();
         Dispatcher.UIThread.Post(() => { PositionIsland(); EnsureHitTest(); InputBox.Focus(); }, DispatcherPriority.Input);
         _ = RefreshUsageAsync();
     }
     public void HideIsland()
     {
-        bool visible=IsVisible;_hideGeneration++;_closing=false;_hideAnimation=null;
+        bool visible=IsVisible;_hideGeneration++;_closing=false;_hideAnimation=null;_replyTimer.Stop();
         IslandTransition.Cancel(this);ResetCloseAppearance();
         if (!visible) return;
         Island.ContextMenu?.Close(); Hide(); Opacity = 1;
@@ -125,7 +129,7 @@ public partial class AssistantIslandWindow : Window
     {
         if(_disposed||!IsVisible)return Task.CompletedTask;
         if(_closing&&_hideAnimation is not null)return _hideAnimation;
-        _closing=true;int generation=++_hideGeneration;Island.ContextMenu?.Close();
+        _closing=true;_replyTimer.Stop();int generation=++_hideGeneration;Island.ContextMenu?.Close();
         _hitTest?.SetTransitionInputTransparent(true);
         return _hideAnimation=CloseCoreAsync(generation);
     }
@@ -137,7 +141,7 @@ public partial class AssistantIslandWindow : Window
     }
     private void NewConversation()
     {
-        _generation++; _request?.Cancel(); _busy = false;
+        _generation++; _request?.Cancel(); _busy = false;ResetReplyReveal();
         InputBox.IsEnabled = true; SendButton.Content = LocalizationManager.TranslateLiteral("送出");
         _session.Clear(); _visibleTurns = 20; InputBox.Text = "";
         ClearPastedImage();
@@ -178,7 +182,7 @@ public partial class AssistantIslandWindow : Window
         ImagePreviewCaption.Text=_pastedImage is null?"":LocalizationManager.Text(
             $"已貼上圖片 · {_pastedImage.Width} × {_pastedImage.Height}",
             $"Pasted image · {_pastedImage.Width} × {_pastedImage.Height}");
-        ImagePreviewNotice.Text=LocalizationManager.Text("按送出才判讀 · 圖片不存入記憶","Analyzed only after Send · No image memory");
+        ImagePreviewNotice.Text=LocalizationManager.Text("送出後本機讀字 · 不上傳圖片","Local OCR after Send · Image stays on this PC");
     }
     private void ClearPastedImage()
     {
@@ -193,42 +197,44 @@ public partial class AssistantIslandWindow : Window
         var token = _request.Token; var generation = _generation;
         _busy = true; InputBox.IsEnabled = false; SendButton.Content = LocalizationManager.TranslateLiteral("取消");
         var mode = ModeCombo.SelectedIndex switch { 1 => "chat", 2 => "web", 3 => "search", _ => "auto" };
-        StatusText.Text = mode == "chat" ? LocalizationManager.TranslateLiteral("Gemini 3.5 Lite 思考中…") : LocalizationManager.TranslateLiteral("取得共用搜尋與 AI 回覆…");
+        StatusText.Text = _pastedImage is not null?LocalizationManager.Text("Windows 本機讀字中…","Reading image text locally…"):
+            mode == "web" ? LocalizationManager.Text("正在搜尋…","Searching…") : LocalizationManager.Text("AI 回覆中…","AI is replying…");
         try
         {
             var personal=_personal;
             var attached=_pastedImage;
-            var local=attached is null?personal.Handle(question,DateTimeOffset.Now,_session.Turns.LastOrDefault()?.Question):null;
-            if(local is null&&attached is null)
-            {
-                var memory=personal.ObserveSelfStatement(question,DateTimeOffset.Now);
-                if(memory is not null)local=new LocalAssistantResult($"已記住〔{memory.Category}〕{memory.Text}\n可以在右鍵 → 記憶宮殿修改或刪除。",memory.Id);
-            }
-            var reply = local is not null ? new AssistantReply(local.Text,"local",null,false,null,null,null)
-                : await _client.AskAsync(question, personal.WithMemory(_session.ModelHistory(),question), mode, token,attached?.ToInput());
+            var reply = await _client.AskAsync(question, personal.WithMemory(_session.ModelHistory(),question), mode, token,attached?.ToInput());
             if (generation != _generation || _disposed) return;
-            if (attached is null && reply.answer_kind == "model" && reply.memory_suggestions is { Length: > 0 })
+            token.ThrowIfCancellationRequested();
+            if (attached is null)
             {
-                try
+                var notices = new List<string>();
+                var remembered=false;
+                foreach (var suggestion in reply.memory_suggestions ?? [])
                 {
-                    var saved = personal.AcceptModelSuggestion(question, reply.memory_suggestions[0], DateTimeOffset.Now);
-                    if (saved is not null) reply = reply with { text = reply.text + LocalizationManager.Text(
-                        $"\n\n已記住〔{saved.Category}〕{saved.Text}。可在記憶宮殿修改或刪除。",
-                        $"\n\nSaved to memory: {saved.Text}. You can edit or delete it in Memory Palace.") };
+                    try {
+                        var saved = personal.AcceptModelSuggestion(question, suggestion, DateTimeOffset.Now);
+                        remembered|=saved is not null;
+                    } catch (InvalidOperationException ex) { notices.Add(ex.Message); }
                 }
-                catch (InvalidOperationException ex)
+                foreach (var action in reply.personal_actions ?? [])
                 {
-                    // Preserve the successful answer when the separate local save is blocked or fails.
-                    reply = reply with { text = reply.text + "\n\n" + ex.Message };
+                    try {
+                        var result = personal.ApplyModelAction(question, action, DateTimeOffset.Now);
+                        if (result is not null) notices.Add(result.Text);
+                    } catch (InvalidOperationException ex) { notices.Add(ex.Message); }
                 }
-                reply = reply with { memory_suggestions = null };
+                if(remembered)notices.Insert(0,LocalizationManager.Text("這點我記下了。","I'll remember that."));
+                if (notices.Count > 0) reply = reply with { text = reply.text + "\n\n" + string.Join("\n", notices) };
+                reply = reply with { memory_suggestions = null, personal_actions = null };
             }
-            _session.Append(attached is null?question:(string.IsNullOrWhiteSpace(question)?LocalizationManager.Text("〔已貼上圖片〕","[Pasted image]"):question+LocalizationManager.Text("\n〔已附圖片〕","\n[Image attached]")), reply);
-            InputBox.Text = ""; ClearPastedImage(); RenderConversation();
+            InputBox.Text = ""; ClearPastedImage();
+            AppendAndRevealReply(attached is null?question:(string.IsNullOrWhiteSpace(question)?LocalizationManager.Text("〔已貼上圖片〕","[Pasted image]"):question+LocalizationManager.Text("\n〔已附圖片〕","\n[Image attached]")),reply);
             StatusText.Text = _session.StorageNotice ?? (reply.context?.reduced == true
                 ? $"已保留 {_session.Turns.Count} 輪 · 本次使用最近內容及相關舊對話節錄"
+                : reply.answer_kind == "ocr" ? LocalizationManager.Text("Windows 本機 OCR · 未使用 AI 或搜尋額度","Windows local OCR · No AI or search quota used")
                 : reply.answer_kind == "local" ? LocalizationManager.TranslateLiteral("本機提醒／記憶 · 未使用 Gemini 額度")
-                : reply.answer_kind == "model" ? LocalizationManager.TranslateLiteral("Gemini 3.5 Lite · 對話已保留") : LocalizationManager.TranslateLiteral("XNG 免費搜尋證據 · 未產生 Gemini 回答"));
+                : reply.answer_kind == "model" ? (reply.model??"AI")+LocalizationManager.Text(" · 對話已保留"," · Conversation saved") : LocalizationManager.TranslateLiteral("搜尋 API 證據 · 未產生 Gemini 回答"));
             if (_session.OlderTurnsRemoved) StatusText.Text += LocalizationManager.TranslateLiteral(" · 最舊內容已超過本機儲存上限");
         }
         catch (OperationCanceledException)
@@ -236,7 +242,7 @@ public partial class AssistantIslandWindow : Window
         catch (Exception ex)
         {
             if (generation != _generation || _disposed) return;
-            StatusText.Text = ex is InvalidOperationException ? ex.Message : LocalizationManager.TranslateLiteral("無法連線至共用 AI 服務。請先啟動 Gemini Hub（8890）。");
+            StatusText.Text = ex is InvalidOperationException ? ex.Message : LocalizationManager.Text("AI 無法完成請求，請檢查金鑰、網路或稍後再試。", "AI could not complete the request. Check your key and network or try again later.");
             if (ex is not InvalidOperationException) AppLog.Error("Assistant request did not complete.", ex);
         }
         finally
@@ -257,53 +263,43 @@ public partial class AssistantIslandWindow : Window
             var text = await _client.UsageAsync(_usageRequest.Token);
             if (!_disposed && !_busy) { StatusText.Text = _session.StorageNotice ?? text; QueueLayout(); }
         }
-        catch { if (!_disposed && !_busy) StatusText.Text = LocalizationManager.TranslateLiteral("AI 共用服務尚未連線 · Alt+A 喚出 · 右鍵新對話"); }
+        catch { if (!_disposed && !_busy) StatusText.Text = LocalizationManager.TranslateLiteral("AI 設定尚未就緒 · Alt+A 喚出 · 右鍵新對話"); }
     }
-    private async Task RefreshXngAsync()
+    private async Task RefreshSearchAsync()
     {
-        _xngRequest?.Cancel(); _xngRequest?.Dispose();
-        _xngRequest = new CancellationTokenSource(TimeSpan.FromSeconds(6));
-        if (!_busy) StatusText.Text = LocalizationManager.TranslateLiteral("正在查詢 XNG 插件版本…");
+        _searchRequest?.Cancel(); _searchRequest?.Dispose();
+        _searchRequest = new CancellationTokenSource(TimeSpan.FromSeconds(6));
+        if (!_busy) StatusText.Text = LocalizationManager.TranslateLiteral("正在查詢搜尋 API 狀態…");
         try
         {
-            var status = await _xng.StatusAsync(_xngRequest.Token);
-            if (!_disposed && !_busy) { StatusText.Text = status; QueueLayout(); }
+            var status = await _client.SearchStatusAsync(_searchRequest.Token);
+            if (!_disposed && !_busy) { StatusText.Text = status.configured ? string.Join(" · ", status.providers.Where(p => p.hasKey).Select(p => p.name + ": " + p.reason)) : LocalizationManager.Text("搜尋尚未設定 · 右鍵 → 搜尋 API 與輪替", "Search not configured · Right click → Search API & rotation"); QueueLayout(); }
         }
-        catch { if (!_disposed && !_busy) { StatusText.Text = LocalizationManager.TranslateLiteral("無法查詢 XNG；請確認共用 AI 服務已啟動。"); QueueLayout(); } }
+        catch { if (!_disposed && !_busy) { StatusText.Text = LocalizationManager.TranslateLiteral("無法查詢搜尋 API；請確認靈動島 AI 服務已啟動。"); QueueLayout(); } }
     }
-    private void RenderConversation()
+    private void RenderConversation(bool followLatest=true)
     {
+        var offset=ReplyScroll.Offset;
+        _revealingText=null;
         ConversationPanel.Children.Clear();
         if (_session.Turns.Count > _visibleTurns)
         {
             var earlier = new Button { Content = LocalizationManager.Text($"顯示較早的對話（共 {_session.Turns.Count} 輪）",$"Show earlier messages ({_session.Turns.Count} turns)"), FontSize = 11 };
-            earlier.Click += (_, _) => { _visibleTurns += 20; RenderConversation(); QueueLayout(); };
+            earlier.Click += (_, _) => { _visibleTurns += 20; RenderConversation(false); QueueLayout(); };
             ConversationPanel.Children.Add(earlier);
         }
         foreach (var turn in _session.Turns.TakeLast(_visibleTurns))
         {
             ConversationPanel.Children.Add(new ConversationMessageRow(true, ConversationMessageRow.MessageText(turn.Question, true)));
             var content = new StackPanel { Spacing = 8 };
-            content.Children.Add(ConversationMessageRow.MessageText(turn.Reply.text, false));
-            if (turn.Reply.sources?.Length > 0)
-            {
-                var links = new StackPanel { Spacing = 2 };
-                foreach (var source in turn.Reply.sources)
-                {
-                    if (!Uri.TryCreate(source.url, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https") || !string.IsNullOrEmpty(uri.UserInfo)) continue;
-                    var button = new Button { Content = new TextBlock { Text = $"[{source.id}] {source.title}", TextWrapping = TextWrapping.Wrap }, FontSize = 12, Foreground = Brush.Parse("#96E9F7"), Background = Brushes.Transparent, Padding = new Thickness(4), HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch, HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Left };
-                    button.Click += (_, _) => { try { Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true }); } catch (Exception ex) { AppLog.Error("Unable to open an evidence link.", ex); } };
-                    links.Children.Add(button);
-                }
-                var expander = new Expander { Header = LocalizationManager.Text($"來源 · {links.Children.Count}",$"Sources · {links.Children.Count}"), Content = links, FontSize = 12, Foreground = Brush.Parse("#D5DCDC") };
-                expander.Expanded += (_, _) => QueueLayout(); expander.Collapsed += (_, _) => QueueLayout();
-                content.Children.Add(expander);
-            }
+            var revealing=ReferenceEquals(turn,_revealingTurn)&&_replyReveal is not null;
+            var message=ConversationMessageRow.MessageText(revealing?_replyReveal!.VisibleText:turn.Reply.text,false);
+            content.Children.Add(message);if(revealing)_revealingText=message;
             ConversationPanel.Children.Add(new ConversationMessageRow(false, content) { Margin = new Thickness(0, 0, 0, 4) });
         }
         ReplyScroll.IsVisible = _session.Turns.Count > 0;
         ConversationFrame.IsVisible = ReplyScroll.IsVisible;
-        Dispatcher.UIThread.Post(() => ReplyScroll.ScrollToEnd(), DispatcherPriority.Loaded);
+        Dispatcher.UIThread.Post(() => {if(_disposed)return;if(followLatest)ReplyScroll.ScrollToEnd();else ReplyScroll.Offset=offset;},DispatcherPriority.Loaded);
     }
     private void QueueLayout()
     {

@@ -60,7 +60,8 @@ public static class ClipboardImage
         if(codec is null||codec.Info.Width<=0||codec.Info.Height<=0||codec.Info.Width>8192||codec.Info.Height>8192||
           (long)codec.Info.Width*codec.Info.Height>16777216)throw new InvalidOperationException("無法讀取圖片，請重新複製截圖。");
         using var original=SKBitmap.Decode(codec)??throw new InvalidOperationException("圖片資料不完整。");
-        foreach(int edge in new[]{1600,1200,900})
+        // Retain small screenshot text at Windows OCR's supported 2600px edge before reducing to fit the byte cap.
+        foreach(int edge in new[]{2600,1600,1200,900})
         {
             double ratio=Math.Min(1,(double)edge/Math.Max(original.Width,original.Height));
             int w=Math.Max(1,(int)Math.Round(original.Width*ratio)),h=Math.Max(1,(int)Math.Round(original.Height*ratio));

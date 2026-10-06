@@ -47,10 +47,10 @@ internal static class HudAnimations
     private const double TNumReady = 0.42;
     private const double PillRadiusA = 30d;
     private const double PillRadiusB = 18d;
-    private const double PillWidthA = 300d;
+    private const double PillWidthA = 560d;
     private const double PillWidthB = 560d;
     private const double PillHeightA = 60d;
-    private const double PillHeightB = 68d;
+    private const double PillHeightB = 90d;
     private const double IconOffsetB = -179d;
     private const double IconOffsetC = -245d;
 
@@ -110,7 +110,7 @@ internal static class HudAnimations
         var a = New(o);
         a.Children.Add(KF(MapCue(o, 0d), null, W(PillWidthA)));
         a.Children.Add(KF(MapCue(o, TAppear), KS_In, W(PillWidthA)));
-        a.Children.Add(KF(MapCue(o, TExpand), BackOut(o), W(o.SurfaceWidth + 18d)));
+        a.Children.Add(KF(MapCue(o, TExpand), KS_InOut, W(o.SurfaceWidth)));
         a.Children.Add(KF(MapCue(o, TMove), KS_Smooth, W(o.SurfaceWidth)));
         a.Children.Add(KF(MapCue(o, THoldC), KS_In, W(o.SurfaceWidth)));
         return a;

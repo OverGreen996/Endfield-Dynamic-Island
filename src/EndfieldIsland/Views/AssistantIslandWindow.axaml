@@ -17,8 +17,8 @@
         <MenuItem x:Name="NewConversationItem" Header="新對話"/>
         <MenuItem x:Name="MemoryPalaceItem" Header="記憶宮殿／定時提醒"/>
         <MenuItem x:Name="UsageItem" Header="查詢 Gemini 用量"/>
-        <MenuItem x:Name="XngStatusItem" Header="查詢 XNG 插件版本"/>
-        <MenuItem x:Name="XngManagerItem" Header="管理 XNG 插件／來源規則"/>
+        <MenuItem x:Name="SearchStatusItem" Header="搜尋 API 狀態"/>
+        <MenuItem x:Name="SearchSettingsItem" Header="搜尋 API 與輪替"/>
         <MenuItem x:Name="MusicItem" Header="音樂播放"/>
         <MenuItem x:Name="HideItem" Header="收起靈動島"/>
       </ContextMenu>

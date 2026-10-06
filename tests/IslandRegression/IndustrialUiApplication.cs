@@ -51,7 +51,7 @@ public sealed class IndustrialUiApplication:Application
             int passed=0;void Check(bool value,string text){if(!value)throw new Exception("FAIL: "+text);passed++;Console.WriteLine("PASS: "+text);}
             var issues=new HashSet<string>();var tabs=settings.FindControl<TabControl>("ModuleTabs")!;
             var temp=Path.Combine(Path.GetTempPath(),"IslandIndustrial-"+Guid.NewGuid().ToString("N"));
-            var store=new PersonalAssistantStore(Path.Combine(temp,"p.dpapi"));store.Handle("記住我喜歡安靜的介面",DateTimeOffset.Now);store.Handle("30分鐘後提醒我驗收",DateTimeOffset.Now);
+            var store=new PersonalAssistantStore(Path.Combine(temp,"p.dpapi"));PersonalTestData.Memory(store,"我喜歡安靜的介面","介面偏好");PersonalTestData.Remind(store,"驗收",1800);
             var session=new AssistantSession(Path.Combine(temp,"s.dpapi"));
             for(int i=0;i<15;i++)session.Append("請保留中文原文，不要因為切換介面語言翻譯我。",new AssistantReply("這是合成測試，保留原訊息。這段較長的內容用來驗證捲軸與左右頭像不會相互重疊。","local",null,false,null,null,null));
             var ai=new AssistantIslandWindow(store,session);var palace=new MemoryPalaceWindow(store);
@@ -75,7 +75,10 @@ public sealed class IndustrialUiApplication:Application
                     Check(session.Turns[0].Question.StartsWith("請保留"),"language change preserves original chat "+language);ai.HideIsland();
                     palace.Show();await Task.Delay(100);Save(palace,folder,"memory-"+language);
                     var palaceTabs=palace.GetLogicalDescendants().OfType<TabControl>().Single();palaceTabs.SelectedIndex=1;await Task.Delay(50);Save(palace,folder,"reminders-"+language);
-                    if(language==AppLanguage.English)Check(palace.GetLogicalDescendants().OfType<TextBlock>().Where(t=>t.Text?.Contains(" · ID ")==true).All(t=>!Regex.IsMatch(t.Text!,"[\\p{IsCJKUnifiedIdeographs}]")),"generated reminder metadata is English");
+                    if(language==AppLanguage.English) {
+                        var metadata=((TabItem)palaceTabs.Items[1]!).GetLogicalDescendants().OfType<TextBlock>().Where(t=>t.Text?.Contains(" · ID ")==true).ToArray();
+                        Check(metadata.Length>0&&metadata.All(t=>!Regex.IsMatch(t.Text!,"[\\p{IsCJKUnifiedIdeographs}]")),"generated reminder metadata is English; original memory quotes stay intact");
+                    }
                     palaceTabs.SelectedIndex=0;palace.Hide();
                 }
                 File.WriteAllText(Path.Combine(folder,"untranslated.json"),JsonSerializer.Serialize(issues,new JsonSerializerOptions{WriteIndented=true}));
@@ -113,7 +116,8 @@ public sealed class IndustrialUiApplication:Application
                     }
                     var clock=hud.FindControl<TextBlock>("ClockText")!;var overviewStart=overview.TranslatePoint(default,(Control)hud.Content!)!.Value;
                     var clockEnd=clock.TranslatePoint(new Point(0,clock.Bounds.Height),(Control)hud.Content!)!.Value;
-                    Check(clockEnd.Y<=overviewStart.Y&&clock.FontSize>=16,"larger clock stays above metric region "+language);
+                    var clockStart=clock.TranslatePoint(default,(Control)hud.Content!)!.Value;
+                    Check(clockStart.X>=overviewStart.X+overview.Bounds.Width&&clock.FontSize<=10,"quiet clock stays outside metric columns "+language);
                     foreach(var metric in overview.GetLogicalDescendants().OfType<TextBlock>())
                     {var point=metric.TranslatePoint(default,overview)!.Value;Check(point.X>=0&&point.Y>=0&&point.X+metric.Bounds.Width<=overview.Bounds.Width+.1&&point.Y+metric.Bounds.Height<=overview.Bounds.Height+.1,"metric text stays inside reserved HUD band: "+metric.Text);}
                     File.WriteAllText(Path.Combine(folder,"overview-bounds-"+language+".json"),JsonSerializer.Serialize(overview.GetLogicalDescendants().OfType<Control>().Select(c=>new{type=c.GetType().Name,text=(c as TextBlock)?.Text,bounds=c.Bounds.ToString(),point=c.TranslatePoint(new Point(0,0),(Control)hud.Content!)?.ToString(),desired=c.DesiredSize.ToString(),opacity=c.Opacity}),new JsonSerializerOptions{WriteIndented=true}));
@@ -124,12 +128,12 @@ public sealed class IndustrialUiApplication:Application
                     hud.ApplySettings(new AppSettings{AlwaysVisible=true,GlobalScale=size,ShowClock=true,ShowDate=true});
                     await hud.ShowPersistentAsync(HudProfileRenderer.Render(profile,values));await Task.Delay(50);
                     var screen=hud.Screens.ScreenFromWindow(hud)!;double scaling=screen.Scaling;
-                    double width=760*size*scaling,height=112*size*scaling;
+                    double width=560*size*scaling,height=60*size*scaling;
                     double left=hud.Position.X+(hud.Width*scaling-width)/2,top=hud.Position.Y+(hud.Height*scaling-height)/2;
                     Check(hud.IsPointInsideInteractiveHud(new PixelPoint((int)(left+width/2),(int)(top+height/2))),"scaled overview body accepts input: "+size);
                     Check(!hud.IsPointInsideInteractiveHud(new PixelPoint((int)(left+2),(int)(top+2))),"scaled overview transparent corner passes through: "+size);
                     Check(!hud.IsPointInsideInteractiveHud(new PixelPoint((int)(left+width+8),(int)(top+height/2))),"scaled overview outside edge passes through: "+size);
-                    Check(Math.Abs(hud.FindControl<Border>("Pill")!.Height-112)<.1,"overview retains final capsule height: "+size);
+                    Check(Math.Abs(hud.FindControl<Border>("Pill")!.Height-60)<.1,"overview retains original capsule height: "+size);
                     await hud.HideAnimatedAsync();
                 }
                 Check(requested.Contains("gpu.dedicated_used_bytes")&&requested.Contains("memory.total_bytes")&&requested.Contains("cpu.usage"),"shared snapshot requests correct telemetry");

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -439,6 +439,25 @@ public partial class HudCustomizerView : UserControl
             string enteredName = ProfileNameBox.Text?.Trim() ?? "";
             bool renamed = enteredName.Length > 0
                            && !string.Equals(enteredName, ProfileDisplayName(old), StringComparison.Ordinal);
+            // Device/time options belong to the selected preset. They do not change its layout
+            // and must not create another profile merely because hardware discovery completed.
+            var optionAdjustedBase = editorBase with
+            {
+                GpuAdapterId = edited.GpuAdapterId,
+                TimeTargetEnabled = edited.TimeTargetEnabled,
+                TimeTarget = edited.TimeTarget
+            };
+            if (!renamed && ProfilesFunctionallyEqual(optionAdjustedBase, edited))
+            {
+                bool optionsChanged = !ProfilesFunctionallyEqual(editorBase, edited);
+                _profiles[_selectedIndex] = old with
+                {
+                    GpuAdapterId = edited.GpuAdapterId,
+                    TimeTargetEnabled = edited.TimeTargetEnabled,
+                    TimeTarget = edited.TimeTarget
+                };
+                return optionsChanged;
+            }
             bool changed = renamed || !ProfilesFunctionallyEqual(editorBase, edited);
             if (!changed) return false;
 
@@ -556,6 +575,7 @@ public partial class HudCustomizerView : UserControl
     private static bool ProfilesFunctionallyEqual(HudProfile a, HudProfile b)
     {
         if (!string.Equals(a.AnimationMode, b.AnimationMode, StringComparison.Ordinal)
+            || !string.Equals(a.PresentationLayout, b.PresentationLayout, StringComparison.Ordinal)
             || !string.Equals(a.TaglineTemplate, b.TaglineTemplate, StringComparison.Ordinal)
             || !string.Equals(a.TitleTemplate, b.TitleTemplate, StringComparison.Ordinal)
             || !string.Equals(a.PrimaryTemplate, b.PrimaryTemplate, StringComparison.Ordinal)
@@ -694,6 +714,7 @@ public partial class HudCustomizerView : UserControl
     private string GetSelectedGpuAdapterId(string fallback)
     {
         int index = GpuAdapterCombo?.SelectedIndex ?? -1;
+        if (index == 0 && string.IsNullOrWhiteSpace(fallback)) return "";
         return index >= 0 && index < _gpuAdapters.Count ? _gpuAdapters[index].Id : fallback;
     }
 
@@ -895,7 +916,7 @@ public partial class HudCustomizerView : UserControl
 
         bool wasBuiltIn = _profiles[_selectedIndex].IsBuiltIn;
         bool changed = SaveCurrentProfile();
-        if (wasBuiltIn && changed)
+        if (wasBuiltIn && changed && !_profiles[_selectedIndex].IsBuiltIn)
             ProfileStatusText.Text = LocalizationManager.Text("已基於內建方案建立修改副本，原預設保持不變", "Modified copy created; the built-in preset is unchanged.");
         else
             ProfileStatusText.Text = changed ? LocalizationManager.Text("方案已儲存", "Profile saved") : LocalizationManager.Text("方案沒有需要儲存的更改", "No changes to save");

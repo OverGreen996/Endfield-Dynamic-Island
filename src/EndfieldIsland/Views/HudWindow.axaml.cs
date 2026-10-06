@@ -29,8 +29,8 @@ public partial class HudWindow : Window
     private WindowsHudHitTest? _hitTest;
     private HudRenderData? _lastRenderData;
     private bool _overviewActive;
-    private double SurfaceWidth=>_overviewActive?760:560;
-    private double SurfaceHeight=>_overviewActive?112:60;
+    private double SurfaceWidth=>560;
+    private double SurfaceHeight=>60;
     private readonly DispatcherTimer _clockTimer;
     private bool _bodyToggleEnabled;
 
@@ -117,12 +117,15 @@ public partial class HudWindow : Window
         IsHudBusy = true;
 
         ApplyRenderData(data);
-        PreparePreviewInitialState();
+        bool originalOverview=data.Metrics is {Count:4}&&!data.SimpleAnimation&&IslandTransition.AnimationsEnabled;
+        if(originalOverview)ResetToInitial();else PreparePreviewInitialState();
         ShowPositioned();
 
         try
         {
-            await Task.WhenAll(
+            if(originalOverview)
+                await OriginalCapsuleIntro.RunAsync(this,Pill,NumHost,"",_animOptions with{DurationSeconds=3},ct);
+            else await Task.WhenAll(
                 HudAnimations.PreviewPillIn(SurfaceWidth,SurfaceHeight).RunAsync(Pill, ct),
                 HudAnimations.PreviewContentIn().RunAsync(BoltIcon, ct),
                 HudAnimations.PreviewContentIn().RunAsync(NumHost, ct),
@@ -439,17 +442,16 @@ public partial class HudWindow : Window
         _overviewActive=overview;
         _animOptions=_animOptions with{SurfaceWidth=SurfaceWidth,SurfaceHeight=SurfaceHeight};
         NumHost.Width=ClockHost.Width=SurfaceWidth;NumHost.Height=overview?SurfaceHeight:double.NaN;ClockHost.Height=SurfaceHeight;
-        OverviewIdentity.IsVisible=OverviewHeading.IsVisible=overview;
-        OverviewEdge.IsVisible=overview;
-        Pill.BorderThickness=overview?new Thickness(.75):new Thickness(0);
-        Pill.BorderBrush=overview?Brush.Parse("#62655C"):null;
-        OverviewHost.IsVisible=overview;StandardPrimary.IsVisible=StandardRight.IsVisible=Badge.IsVisible=!overview;
-        CircleForm.IsVisible=SquareForm.IsVisible=!overview;
+        OverviewIdentity.IsVisible=OverviewHeading.IsVisible=OverviewEdge.IsVisible=false;
+        Pill.BorderThickness=new Thickness(0);
+        Pill.BorderBrush=null;
+        OverviewHost.IsVisible=overview;StandardPrimary.IsVisible=StandardRight.IsVisible=!overview;
+        Badge.IsVisible=CircleForm.IsVisible=SquareForm.IsVisible=true;
         OverviewClockDivider.IsVisible=false;
         if(overview)UpdateOverview(data.Metrics!);
         else
         {
-            ClockText.Margin=new Thickness(0,5,70,0);DateText.Margin=new Thickness(0,0,70,5);
+            ClockText.Margin=new Thickness(0,5,70,0);DateText.Margin=new Thickness(0,0,70,5); ClockText.Width=DateText.Width=double.NaN;ClockText.TextAlignment=DateText.TextAlignment=TextAlignment.Left;
             ClockText.FontSize=10;DateText.FontSize=8;ClockText.Opacity=.82;DateText.Opacity=.62;
             DateText.VerticalAlignment=Avalonia.Layout.VerticalAlignment.Bottom;
         }
@@ -461,9 +463,9 @@ public partial class HudWindow : Window
         if (previous?.RightText != data.RightText) RightText.Text = data.RightText;
         if (previous?.RightSuffix != data.RightSuffix) RightSuffixText.Text = data.RightSuffix;
 
-        if (previous?.LeftIcon != data.LeftIcon)
+        if (previous?.LeftIcon != data.LeftIcon || previous?.Metrics is null != (data.Metrics is null))
         {
-            var geometry = IconCatalog.GetGeometry(data.LeftIcon);
+            var geometry = overview?Geometry.Parse("M13 2 L4 13 L12 13 L18 2 Z M13 11 L20 11 L13 22 L4 22 Z"):IconCatalog.GetGeometry(data.LeftIcon);
             CircleGlyph.Data = geometry;
             SquareGlyph.Data = geometry;
         }
@@ -471,16 +473,16 @@ public partial class HudWindow : Window
         bool useOriginalLaptop = string.Equals(data.RightIcon, "battery", StringComparison.OrdinalIgnoreCase)
                                  || string.Equals(data.RightIcon, "laptop", StringComparison.OrdinalIgnoreCase);
 
-        if (previous?.RightIcon != data.RightIcon)
+        if (previous?.RightIcon != data.RightIcon || previous?.Metrics is null != (data.Metrics is null))
         {
             BadgeLaptop.IsVisible = useOriginalLaptop;
             BadgeElectrode.IsVisible = useOriginalLaptop;
             BadgeGlyph.IsVisible = !useOriginalLaptop;
             if (!useOriginalLaptop)
-                BadgeGlyph.Data = IconCatalog.GetGeometry(data.RightIcon);
+                BadgeGlyph.Data = overview ? Geometry.Parse("M5 5 H19 V19 H5 Z M9 9 H15 V15 H9 Z M8 1 V5 M12 1 V5 M16 1 V5 M8 19 V23 M12 19 V23 M16 19 V23 M1 8 H5 M1 12 H5 M1 16 H5 M19 8 H23 M19 12 H23 M19 16 H23") : IconCatalog.GetGeometry(data.RightIcon);
         }
 
-        if (previous?.AccentColor != data.AccentColor)
+        if (previous?.AccentColor != data.AccentColor || previous?.Metrics is null != (data.Metrics is null))
         {
             var accent = TryColor(data.AccentColor, Color.Parse("#C6CA4C"));
             var accentBrush = new SolidColorBrush(accent);
@@ -488,19 +490,21 @@ public partial class HudWindow : Window
             LaptopScreen.BorderBrush = accentBrush;
             LaptopBase.Background = accentBrush;
             BadgeElectrode.Background = accentBrush;
-            BadgeGlyph.Foreground = accentBrush;
+            BadgeGlyph.Fill = overview ? null : accentBrush; BadgeGlyph.Stroke = overview ? accentBrush : null; BadgeGlyph.StrokeThickness = overview ? 1.5 : 0;
         }
 
-        if (previous is null || Math.Abs(previous.Progress - data.Progress) > 0.0005)
-            SetProgressTarget(data.Progress, animate: previous is not null && IsVisible);
+        double badgeProgress=overview?(data.Metrics![1].Usage??0)/100:data.Progress;
+        double previousBadgeProgress=previous?.Metrics is {Count:4} oldMetrics?(oldMetrics[1].Usage??0)/100:previous?.Progress??-1;
+        if (previous is null || Math.Abs(previousBadgeProgress-badgeProgress)>0.0005)
+            SetProgressTarget(badgeProgress, animate: previous is not null && IsVisible);
 
         _lastRenderData = data;
     }
 
     private readonly List<(TextBlock Label,TextBlock Value,TextBlock Unit,TextBlock Detail,Border Track,Border Fill,ScaleTransform Scale)> _overviewCells=new();
-    private static readonly IBrush OverviewText=Brush.Parse("#F3F4ED");
-    private static readonly IBrush OverviewMuted=Brush.Parse("#C1C6BB");
-    private static readonly IBrush OverviewAccent=Brush.Parse("#E6E744");
+    private static readonly IBrush OverviewText=Brushes.White;
+    private static readonly IBrush OverviewMuted=Brush.Parse("#8D8B8C");
+    private static readonly IBrush OverviewAccent=Brush.Parse("#C6CA4C");
     private static readonly IBrush OverviewWarning=Brush.Parse("#EDB65E");
     private static readonly IBrush OverviewCritical=Brush.Parse("#FF715F");
     private static readonly string[] OverviewLabelsEnglish={"CPU","GPU","RAM","VRAM"};
@@ -511,25 +515,19 @@ public partial class HudWindow : Window
             for(int index=0;index<4;index++)
             {
                 // Fixed columns and tabular figures keep telemetry changes from moving their neighbours.
-                var panel=new Grid{RowDefinitions=new RowDefinitions("14,26,12,2"),Margin=new Thickness(12,0,12,0)};
-                var heading=new StackPanel{Orientation=Avalonia.Layout.Orientation.Horizontal,Spacing=5};
-                var icon=new Avalonia.Controls.Shapes.Path{Width=12,Height=12,Stretch=Stretch.Uniform,
-                    Data=IconCatalog.GetGeometry(index==0?"cpu":index==1?"gpu":index==2?"memory":"database"),
-                    Stroke=OverviewMuted,StrokeThickness=1.4,VerticalAlignment=Avalonia.Layout.VerticalAlignment.Center};
-                var label=new TextBlock{FontSize=11,LetterSpacing=1.2,FontFamily=new FontFamily("Consolas"),FontWeight=FontWeight.SemiBold,Foreground=OverviewMuted};
-                heading.Children.Add(icon);heading.Children.Add(label);
+                var panel=new Grid{RowDefinitions=new RowDefinitions("14,21,11"),Margin=new Thickness(0,0,10,0)};
+                var label=new TextBlock{FontSize=10,VerticalAlignment=Avalonia.Layout.VerticalAlignment.Center,FontFamily=new FontFamily("Inter, Segoe UI"),FontWeight=FontWeight.Normal,Foreground=Brush.Parse("#A29FA1")};
                 var numberRow=new StackPanel{Orientation=Avalonia.Layout.Orientation.Horizontal,Spacing=3};
-                var value=new TextBlock{FontSize=26,FontWeight=FontWeight.SemiBold,Foreground=OverviewText,FontFamily=new FontFamily("Consolas"),VerticalAlignment=Avalonia.Layout.VerticalAlignment.Center};
-                var unit=new TextBlock{FontSize=12,FontFamily=new FontFamily("Consolas"),Foreground=OverviewMuted,VerticalAlignment=Avalonia.Layout.VerticalAlignment.Bottom,Margin=new Thickness(0,0,0,4)};
+                var value=new TextBlock{FontSize=22,FontWeight=FontWeight.Medium,Foreground=OverviewText,FontFamily=new FontFamily("Inter, Segoe UI"),VerticalAlignment=Avalonia.Layout.VerticalAlignment.Center};
+                var unit=new TextBlock{FontSize=11,FontFamily=new FontFamily("Inter, Segoe UI"),Foreground=Brushes.White,Opacity=.55,VerticalAlignment=Avalonia.Layout.VerticalAlignment.Bottom,Margin=new Thickness(0,0,0,4)};
                 numberRow.Children.Add(value);numberRow.Children.Add(unit);
-                var detail=new TextBlock{FontSize=11,FontFamily=new FontFamily("Consolas"),Foreground=OverviewMuted,TextTrimming=TextTrimming.CharacterEllipsis};
+                var detail=new TextBlock{FontSize=9,FontFamily=new FontFamily("Inter, Segoe UI"),Foreground=Brushes.White,Opacity=.55,TextTrimming=TextTrimming.CharacterEllipsis};
                 var scale=new ScaleTransform(0,1);
                 var fill=new Border{Background=OverviewAccent,RenderTransform=scale,RenderTransformOrigin=new RelativePoint(0,0,RelativeUnit.Relative)};
-                var track=new Border{Height=2,Background=Brush.Parse("#4D514B"),CornerRadius=new CornerRadius(1),ClipToBounds=true,Child=fill};
-                Grid.SetRow(numberRow,1);Grid.SetRow(detail,2);Grid.SetRow(track,3);
-                panel.Children.Add(heading);panel.Children.Add(numberRow);panel.Children.Add(detail);panel.Children.Add(track);
+                var track=new Border{Height=2,IsVisible=false,Background=Brush.Parse("#4D514B"),CornerRadius=new CornerRadius(1),ClipToBounds=true,Child=fill};
+                Grid.SetRow(numberRow,1);Grid.SetRow(detail,2);
+                panel.Children.Add(label);panel.Children.Add(numberRow);panel.Children.Add(detail);
                 var cell=new Grid();cell.Children.Add(panel);
-                if(index>0)cell.Children.Add(new Border{Width=1,Height=40,Background=Brush.Parse("#53564F"),HorizontalAlignment=Avalonia.Layout.HorizontalAlignment.Left,VerticalAlignment=Avalonia.Layout.VerticalAlignment.Center});
                 Grid.SetColumn(cell,index);OverviewHost.Children.Add(cell);_overviewCells.Add((label,value,unit,detail,track,fill,scale));
             }
         }
@@ -537,19 +535,19 @@ public partial class HudWindow : Window
         {
             var cell=_overviewCells[i];var metric=metrics[i<2?i:i==2?3:2];
             cell.Label.Text=OverviewLabelsEnglish[i];
-            string reading=i>=2&&metric.Detail.EndsWith(" GB",StringComparison.Ordinal)?metric.Detail:metric.Value;
-            cell.Detail.Text=i==2?metric.Value=="—"?"—":metric.Value+" USED":i==3&&metric.Usage is {}usage?$"{usage:0}% USED":metric.Detail;
+            string reading=i==2?metric.Detail.Split('/')[0]+(metric.Detail.EndsWith(" GB",StringComparison.Ordinal)?" GB":""):metric.Value;
+            cell.Detail.Text=i==2?metric.Detail.Contains('/')?"/ "+metric.Detail.Split('/')[1]:metric.Detail:i==3?metric.Detail:metric.Detail;
             bool percent=reading.EndsWith('%');bool gigabytes=reading.EndsWith(" GB",StringComparison.Ordinal);
             cell.Value.Text=percent?reading[..^1]:gigabytes?reading[..^3]:reading;
             cell.Unit.Text=percent?"%":gigabytes?"GB":"";
-            cell.Value.FontSize=cell.Value.Text.Length>5?20:26;
+            cell.Value.FontSize=22;
             cell.Scale.ScaleX=Math.Clamp((metric.Usage??0)/100,0,1);cell.Track.Opacity=metric.Usage is null?.25:1;
             cell.Fill.Background=metric.Usage>=90?OverviewCritical:metric.Usage>=75?OverviewWarning:OverviewAccent;
         }
         // Clock remains in its dedicated band rather than crossing the metric labels.
-        ClockText.Margin=new Thickness(0,14,26,0);DateText.Margin=new Thickness(0,18,118,0);
-        DateText.VerticalAlignment=Avalonia.Layout.VerticalAlignment.Top;
-        ClockText.FontSize=18;DateText.FontSize=10;ClockText.Opacity=DateText.Opacity=1;
+        OverviewHost.Margin=new Thickness(64,0,_settings.ShowClock?136:88,0); ClockText.Margin=new Thickness(0,17,58,0);DateText.Margin=new Thickness(0,0,58,15); ClockText.Width=66;DateText.Width=66; ClockText.TextAlignment=TextAlignment.Center;DateText.TextAlignment=TextAlignment.Center;
+        DateText.VerticalAlignment=Avalonia.Layout.VerticalAlignment.Bottom;
+        ClockText.FontSize=8;DateText.FontSize=7;ClockText.Opacity=.55;DateText.Opacity=.4;
     }
 
     private void SetProgressTarget(double value, bool animate)
@@ -655,7 +653,7 @@ public partial class HudWindow : Window
     {
         Root.Opacity = 1;
         ScaleHost.RenderTransform = new ScaleTransform(1d, 1d);
-        Pill.Width = 300;
+        Pill.Width = SurfaceWidth;
         Pill.Height = 60;
         Pill.CornerRadius = new CornerRadius(30d);
         Pill.Opacity = 0;
@@ -690,7 +688,7 @@ public partial class HudWindow : Window
     {
         Root.Opacity = 1;
         ScaleHost.RenderTransform = new ScaleTransform(1d, 1d);
-        Pill.Width = 300;
+        Pill.Width = SurfaceWidth;
         Pill.Height = 60;
         Pill.CornerRadius = new CornerRadius(30d);
         Pill.Opacity = 0;

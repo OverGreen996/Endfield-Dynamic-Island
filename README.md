@@ -10,13 +10,13 @@
 <p align="center">
   <img alt="Windows 10 / 11" src="https://img.shields.io/badge/Windows-10%20%2F%2011-13C8EB?style=flat-square">
   <img alt=".NET 8" src="https://img.shields.io/badge/.NET-8-323736?style=flat-square">
-  <img alt="v0.26.0" src="https://img.shields.io/badge/release-v0.26.0-E6E744?style=flat-square">
+  <img alt="source v0.28.14" src="https://img.shields.io/badge/source-v0.28.14-E6E744?style=flat-square">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-323736?style=flat-square">
 </p>
 
 以終末地的工業介面為靈感，搭配石墨灰面板、青藍資訊與黃色操作重點。視窗切換使用銜接動畫；一次呈現一種內容，通知結束後回到原來的頁面。
 
-v0.26.0 重做設定視窗：深色索引導覽、銀灰面板、章節字階，以及融入程式的標題列。中英介面與視窗操作都保留；這一版不變更靈動島的顯示或後端邏輯。[設計與驗證](docs/SETTINGS-DESIGN.md)。
+設定視窗採用：深色索引導覽、銀灰面板、章節字階，以及融入程式的標題列。中英介面與視窗操作都保留。[設計與驗證](docs/SETTINGS-DESIGN.md)。
 
 ![設定視窗新版介面](docs/assets/settings-v026.png)
 
@@ -26,7 +26,7 @@ v0.25.0 將 HUD 顯示與採樣分離。硬體方案收起時約每 5 秒背景�
 
 | 模組 | 使用方式 |
 | --- | --- |
-| **AI 助理** | `Alt+A` 直接開始輸入。你的訊息在右側，AI 在左側；支援上下文、來源連結、右鍵新對話與頂部收合動畫。 |
+| **AI 助理** | `Alt+A` 直接開始輸入。你的訊息在右側，AI 在左側；自然問答、快速逐字回覆、上下文、右鍵新對話與頂部收合動畫。 |
 | **音樂島** | `Alt+M` 喚出。封面、時間、進度、上一首／下一首、隨機與重播整合在橫向膠囊中。 |
 | **Windows 通知** | 新通知優先顯示，結束後返回原頁。支援滑鼠停留、點擊固定、隱藏內容與逾時收起。 |
 | **效能 HUD** | 同一列看 CPU、GPU、RAM、VRAM，包含百分比與容量。沒有讀到的數據顯示 `—`，不產生假讀值。 |
@@ -35,26 +35,28 @@ v0.25.0 將 HUD 顯示與採樣分離。硬體方案收起時約每 5 秒背景�
 
 ## 先下載，後設定
 
-1. 到 [Releases](https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest) 下載 `Endfield-Dynamic-Island-Setup-v0.26.0-win-x64.exe`。
+1. 到 [Releases](https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest) 下載 `Endfield-Dynamic-Island-Setup-v<版本>-win-x64.exe`。
 2. 從系統匣退出舊版，執行安裝程式。預設安裝到目前使用者，不需要管理員權限。
 3. 從桌面或開始功能表開啟「終末地 靈動島」。可在 Windows「已安裝的應用程式」解除安裝。
 4. 在設定選擇顯示位置；音樂貼上自己的 YouTube 清單，通知按「要求通知讀取權限」。
 
 安裝版附帶 .NET 執行環境與播放器；升級及解除安裝保留使用者資料，不再配送便攜版。HUD、提醒、記憶管理與通知介面可獨立使用。YouTube 清單播放需要 Microsoft Edge WebView2 Runtime；跟隨瀏覽器模式使用 Windows 媒體介面，隨機／重播是否可用取決於瀏覽器的能力。
 
-**安裝檔內含共用 Gemini Hub 0.4.0 與 Node 執行環境。** 到設定 → AI 助理貼上自己的 Key，確認免費方案後套用即可。既有同一金鑰的配額與用量保留；首次設定或不同金鑰預設使用保守的本機限制，詳見設定說明。[Hub 原始碼與部署教學](integrations/gemini-hub) 可獨立維護。XNG 仍由每位使用者自行安裝 [XNG-Plugin](https://github.com/OverGreen996/XNG-Plugin)，不使用開發者的私人搜尋主機。詳見 [服務與相容性](docs/ARCHITECTURE.md)。
+發佈頁提供的版本以該頁實際附件為準；原始碼版本不代表已發佈到 GitHub。
+
+目前原始碼版本 v0.28.14，AI 與搜尋直接收進主程式：不需 Node、本機 HTTP 服務或 PowerShell 設定工具。安裝後直接設定金鑰即可使用；Daily 的金鑰、資料與額度完全獨立。既有對話、記憶、提醒與用量紀錄保留。
+
+對話區塊重寫為自然問答，快速逐字顯示，不展示來源或查證報告。一般文字助理採 Gemini → Groq GPT-OSS 120B → Cloudflare Qwen3.8-27B，移除本機次數與累計 token 限額，依官方回應與恢復時間輪替。設定 → AI 助理填入備援憑證；圖片文字改用 Windows 本機 OCR；單純擷取文字不需模型金鑰。[備援設定教學](docs/AI-FALLBACK.md)。
+
+搜尋設定新增可選「每輪搜尋換一家」，成功後依自訂順序循環分散請求；快取、取消與純聊天不推進，故障及封鎖自動跳過。預設保留優先順序，詳見 [操作說明](docs/USAGE.zh-TW.md)。
 
 ## 本機優先
 
-- AI 輸入框支援 `Ctrl+V` 貼圖，按送出才判讀；自動／搜尋＋AI 模式可接續 XNG 查資料。圖片不傳給 XNG，也不建立長期記憶。這是圖片理解，沒有生圖或付費備援。
-- 同一輪 Gemini 回答可辨識明確的個人原句，不另扣分類次數。假設、玩笑、第三人資料、敏感資訊及推測不自動記憶。建議 Gemini Hub 0.2.1 或更新版本，使用必填的結構化記憶判斷，避免模型漏附分類；貼圖仍相容 0.2.0。
-- XNG 提供可追溯的搜尋證據；AI 使用端整理回答。搜尋邏輯集中維護。
-- Hub 0.4.0 自動模式先由 Gemini 理解上下文、日期與查詢條件，再決定搜尋；一般聊天通常一次生成，搜尋通常兩次，均計入共用額度。普通 XNG 搜尋仍不呼叫 Gemini。
-- 正常搜尋不自動呼叫 Gemini 或付費搜尋服務。Gemini 依共用 Hub 的用量限制與免費核對規則執行。
-- 對話、提醒與記憶採 Windows 使用者加密；頭像只保存在本機。通知不會送給模型。
-- 通知與提醒不同：通知短暫顯示；提醒最多 300 筆，滿額依建立順序移除最舊項目。
-- 軟體必須運行才能提醒；睡眠或關機時不會喚醒電腦，恢復後處理逾期事項。
-
+- 搜尋使用 Exa Auto → Tavily Basic → Firecrawl Search。右鍵 → 搜尋 API 與輪替，在程式內設定金鑰及順序。Exa、Tavily 無本機額度限制，API 搜尋失敗後停用至下個月 2 號台灣時間 00:05，再於下一次搜尋重試；期間自動切換備援。Firecrawl 無本機點數上限，以官方 API 核對餘額，帳單切換日與時間可手動設定。
+- 自動模式先由 Gemini 理解一次問題；一般聊天以專門答覆步驟回答，需要查證才搜尋，再依資料整理。只搜尋模式不呼叫 Gemini。
+- 同一輪模型回應判斷個人記憶，不另扣分類次數；玩笑、第三人資料、敏感資訊與推測不自動記憶。
+- 金鑰、對話、提醒與記憶使用 Windows DPAPI；通知不會送給模型。模型用量採原有本機帳本，升級不重設額度。
+- 提醒最多 300 筆，滿額移除最舊項目；程式必須運行才能提醒，不會喚醒睡眠或關機的電腦。
 [隱私與資料位置](docs/PRIVACY.md) · [操作教學](docs/USAGE.zh-TW.md) · [設計規範](docs/DESIGN.md) · [變更紀錄](CHANGELOG.md)
 
 ## 從原始碼建置
@@ -78,3 +80,9 @@ dotnet build src/EndfieldIsland/EndfieldChargePlus.csproj -c Release
 介面向量圖標來自 [Yue-plus/endfield_icons](https://github.com/Yue-plus/endfield_icons)，播放器附帶 YouTube NonStop 的 MIT 授權元件。第三方元件詳見 [NOTICE.md](NOTICE.md)；相關原始碼、授權與來源隨包保留。
 
 這是非官方社群衍生工具，與《明日方舟：終末地》開發方或發行方無隸屬或背書關係。頁首為品牌示意圖，數字用於版面示範。
+
+### 人格與五組 Gemini 主力
+
+設定 → AI 助理 → **管理 AI 人格**：分開填寫角色人格與互動規則，儲存後按「使用此人格」。可新增、複製或刪除，內附可編輯的莊方宜助理範例。切換從下一則訊息生效，原本聊天與記憶保留。
+
+**設定 Gemini 五組主力輪換**：第 1 組沿用上方主金鑰，另填 2–5 組。程式持續使用第 1 組，受限才換 2、3、4、5，全部不可用才接 Groq → Cloudflare；恢復後回到較優先組。對話上下文與人格不因帳號接手而中斷。Google 配額按專案計算，多帳號使用仍須符合 [API 條款](https://developers.google.com/terms/)，不是無限免費額度。

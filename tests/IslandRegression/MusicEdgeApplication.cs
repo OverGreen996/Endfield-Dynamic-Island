@@ -40,7 +40,7 @@ public sealed class MusicEdgeApplication : Application
         underlay.Closed+=(_,_)=>{timer.Stop();island.Close();desktop.Shutdown();};
         if(desktop.Args?.Contains("--music-edge-test")==true)
         Dispatcher.UIThread.Post(async()=>{
-            try{await Task.Delay(500);Run(island);desktop.Shutdown(0);}
+            try{await Task.Delay(3300);Run(island);desktop.Shutdown(0);}
             catch(Exception ex){Console.WriteLine(ex);desktop.Shutdown(1);}
         });
         base.OnFrameworkInitializationCompleted();
@@ -68,9 +68,7 @@ public sealed class MusicEdgeApplication : Application
             Check(cropped==0,$"native mask preserves every painted pixel: width={width}, scale={scale}, cropped={cropped}");
             Check(transparentBlocked==0,$"native mask excludes every fully transparent pixel: width={width}, scale={scale}");
             Check(partial>100,$"fractional alpha preserved at scale={scale}, width={width}");
-            bool continuous=true;double min=10,max=0;
-            for(int angle=5;angle<=85;angle+=5){double a=angle*Math.PI/180;int count=0;for(double r=54;r<=60;r+=.25){int x=(int)((width-68+Math.Cos(a)*r)*scale),y=(int)((68+Math.Sin(a)*r)*scale);var c=pixels.GetPixel(x,y);if(c.Red>150&&c.Green>150&&c.Blue<100)count++;}double thickness=count*.25;min=Math.Min(min,thickness);max=Math.Max(max,thickness);if(thickness<2.5||thickness>4.75)continuous=false;}
-            Check(continuous,$"yellow quarter arc continuous: width={width}, scale={scale}, radial thickness={min:F2}..{max:F2} DIP");
+            Check(island.FindControl<Avalonia.Controls.Shapes.Path>("PlaybackArc")!.Data is not null&&!island.FindControl<Avalonia.Controls.Shapes.Path>("EdgeAccent")!.IsVisible,$"original circular progress replaces corner decoration: width={width}, scale={scale}");
         }
         Console.WriteLine($"{passed}/{passed} PASS; native HRGN versus rendered pixels; simulated render scales, not changed Windows DPI.");
     }

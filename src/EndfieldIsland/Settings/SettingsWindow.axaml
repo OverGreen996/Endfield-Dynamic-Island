@@ -144,14 +144,29 @@
                 <Button x:Name="SaveGeminiKeyBtn" Classes="industrialPrimary" Grid.Column="1" Content="儲存並套用金鑰" Height="42" IsEnabled="False" Background="#E6E744" Foreground="#202020"/>
               </Grid>
               <CheckBox x:Name="GeminiFreeConfirmation" Content="我已確認此金鑰的專案使用免費方案，且未啟用付費。" Foreground="#202728" FontSize="13"/>
-              <TextBlock Text="目前上限以以下用量顯示為準。同一金鑰保留已核對的限制與今日用量；儲存及套用不呼叫 Google。" FontSize="13" Foreground="#202728" TextWrapping="Wrap"/>
-              <Expander Header="首次設定／更換金鑰的限制說明" FontSize="13" Foreground="#535F60">
-                <TextBlock Text="只有首次設定或更換不同金鑰，才預設採本機 20 次／日、3 次／分鐘的保守限制；這不是 Google 的實際額度。原本已核對的同一金鑰不會被降低。套用會重新啟動共用 AI 服務。" Margin="0,8,0,0" TextWrapping="Wrap"/>
+              <TextBlock Text="沒有本機次數或累計 token 限額；由官方 API 決定何時切換備援。保留用量紀錄，儲存不呼叫模型。" FontSize="13" Foreground="#202728" TextWrapping="Wrap"/>
+              <Button x:Name="OpenGeminiPoolBtn" Content="設定 Gemini 五組主力輪換" HorizontalAlignment="Left"/>
+              <Expander Header="額度恢復與自動備援" FontSize="13" Foreground="#535F60">
+                <TextBlock Text="Gemini 每日額度依太平洋時間午夜恢復，台灣夏令期間 15:00、冬令期間 16:00；短暫限流依 API 重試時間。Groq 依 API 的恢復時間；Cloudflare 每日台灣 08:00。到期於下一次對話自動重試優先供應商。" Margin="0,8,0,0" TextWrapping="Wrap"/>
               </Expander>
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock x:Name="GeminiKeyStatusText" Text="正在查詢本機 AI 狀態…" FontSize="13" Foreground="#202728" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"/>
                 <Button x:Name="RefreshGeminiUsageBtn" Grid.Column="1" Content="查詢用量" Height="36"/>
               </Grid>
+            </StackPanel>
+          </Border>
+          <Border Classes="settingsCard">
+            <StackPanel Spacing="12">
+              <TextBlock Text="AI 模型備援" FontSize="16" Foreground="#1D6473" FontWeight="SemiBold"/>
+              <TextBlock Text="Gemini → Groq GPT-OSS 120B → Cloudflare Qwen3-30B-A3B。主力受限時自動接手文字理解、搜尋整理與記憶判斷；金鑰加密保存在本機。" TextWrapping="Wrap" Foreground="#202728" FontSize="13"/>
+              <Button x:Name="OpenAiBackupsBtn" Content="設定 AI 備援與金鑰" HorizontalAlignment="Left"/>
+            </StackPanel>
+          </Border>
+          <Border Classes="settingsCard">
+            <StackPanel Spacing="12">
+              <TextBlock Text="AI 人格與互動規則" FontSize="16" Foreground="#1D6473" FontWeight="SemiBold"/>
+              <TextBlock Text="分開編寫角色人格與互動規則，儲存多組並切換使用；下一則訊息生效。" TextWrapping="Wrap" Foreground="#202728" FontSize="13"/>
+              <Button x:Name="OpenPersonasBtn" Content="管理 AI 人格" HorizontalAlignment="Left"/>
             </StackPanel>
           </Border>
           <Border Classes="settingsCard">
@@ -166,7 +181,7 @@
               <TextBlock x:Name="AvatarNotice" Text="PNG / JPEG / WebP · 自動置中裁成圓形" Foreground="#535F60"/>
             </StackPanel>
           </Border>
-          <TextBlock Text="一般聊天使用 Gemini 3.5 Flash Lite；最新資訊先使用 XNG 共用搜尋。&#10;「只搜尋」不呼叫 Gemini。未設定 Key 或用量鎖定時，仍能取得 XNG 搜尋證據。&#10;對話以 Windows 使用者加密保存在本機；收起不會清空，右鍵新對話才重設。&#10;長對話會選取最近內容及相關舊對話節錄；不代表每次都送出全部歷史。" TextWrapping="Wrap" Foreground="#535F60" FontSize="13"/>
+          <TextBlock Text="一般聊天使用 Gemini 3.5 Flash Lite；AI 先理解問題，需要最新資料才使用搜尋 API。&#10;「只搜尋」不呼叫 Gemini。未設定 Key 或用量鎖定時，已設定搜尋 API 時可取得來源證據。&#10;對話以 Windows 使用者加密保存在本機；收起不會清空，右鍵新對話才重設。&#10;長對話會選取最近內容及相關舊對話節錄；不代表每次都送出全部歷史。" TextWrapping="Wrap" Foreground="#535F60" FontSize="13"/>
         </StackPanel>
         </ScrollViewer>
       </TabItem>
@@ -176,7 +191,7 @@
             <TextBlock Text="新通知優先顯示，結束後回到上一頁。點本體固定，再點收起；滑鼠停在島上時不會逾時。&#10;最多保留 10 則、2 分鐘。收起卡片不會刪除 Windows 通知。" TextWrapping="Wrap" Foreground="#202728" FontSize="15"/>
             <CheckBox x:Name="NotificationsEnabledSwitch" Content="啟用 Windows 通知靈動島" Foreground="#202728"/>
             <CheckBox x:Name="NotificationHideContentSwitch" Content="隱藏通知內容（僅顯示來源）" Foreground="#202728"/>
-            <TextBlock Text="預覽時間沿用「大小與動畫」的顯示秒數。設定需按「儲存並套用」。&#10;通知只留在本機記憶體，不傳給 Gemini / XNG，不建立通知歷史檔案。啟動或重新啟用時不重播舊通知。" TextWrapping="Wrap" Foreground="#535F60"/>
+            <TextBlock Text="預覽時間沿用「大小與動畫」的顯示秒數。設定需按「儲存並套用」。&#10;通知只留在本機記憶體，不傳給 Gemini / 搜尋 API，不建立通知歷史檔案。啟動或重新啟用時不重播舊通知。" TextWrapping="Wrap" Foreground="#535F60"/>
             <Border Classes="settingsCard"><StackPanel Spacing="12">
               <TextBlock x:Name="NotificationStatusText" Text="正在檢查通知權限…" Foreground="#1D6473" TextWrapping="Wrap"/>
               <WrapPanel>

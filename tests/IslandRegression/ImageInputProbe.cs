@@ -11,13 +11,13 @@ public static class ImageInputProbe
     public static void Run()
     {
         int passed=0;void Check(bool value,string name){if(!value)throw new Exception("FAIL: "+name);passed++;Console.WriteLine("PASS: "+name);}
-        using var bitmap=new SKBitmap(2200,1200);using(var canvas=new SKCanvas(bitmap)){
+        using var bitmap=new SKBitmap(3000,1600);using(var canvas=new SKCanvas(bitmap)){
             canvas.Clear(new SKColor(25,29,29));using var ink=new SKPaint{Color=new SKColor(19,200,235),TextSize=80,IsAntialias=true};
             canvas.DrawText("IMAGE INPUT / TEST",100,180,ink);ink.Color=SKColors.Yellow;canvas.DrawRect(100,300,1800,600,ink);
         }
         using var img=SKImage.FromBitmap(bitmap);using var encoded=img.Encode(SKEncodedImageFormat.Png,100);
         var input=ClipboardImage.Normalize(encoded.ToArray());
-        Check(input.Width==1600&&input.Height<=1600,"large clipboard image scaled locally with aspect ratio");
+        Check(input.Width==2600&&input.Height<=2600,"large screenshot retains OCR text detail within the local 2600px edge and aspect ratio");
         Check(Convert.FromBase64String(input.data).Length<=2*1024*1024&&input.mime_type=="image/png","bounded metadata-free inline PNG");
         var dib=new byte[40+16];BinaryPrimitives.WriteInt32LittleEndian(dib,40);BinaryPrimitives.WriteInt32LittleEndian(dib.AsSpan(4),2);BinaryPrimitives.WriteInt32LittleEndian(dib.AsSpan(8),2);BinaryPrimitives.WriteUInt16LittleEndian(dib.AsSpan(12),1);BinaryPrimitives.WriteUInt16LittleEndian(dib.AsSpan(14),24);
         Check(ClipboardImage.Normalize(ClipboardImage.DibToBmp(dib)).Width==2,"Windows DIB clipboard translated to valid PNG");

@@ -1,4 +1,4 @@
-param([string]$Dotnet='dotnet',[ValidateSet('win-x64')][string]$Runtime='win-x64',[string]$InnoCompiler='ISCC.exe',[string]$ExistingNodeRuntime)
+param([string]$Dotnet='dotnet',[ValidateSet('win-x64')][string]$Runtime='win-x64',[string]$InnoCompiler='ISCC.exe')
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot
 [xml]$project=Get-Content -LiteralPath (Join-Path $root 'src\EndfieldIsland\EndfieldChargePlus.csproj') -Raw
@@ -16,7 +16,7 @@ if($LASTEXITCODE -ne 0){throw 'Island publish failed.'}
 # Executable/deps/runtimeconfig names stay distinct; private player data stays outside the installation.
 & $Dotnet publish (Join-Path $root 'src\MusicPlayerHost\MusicPlayerHost.csproj') -c Release -r $Runtime --self-contained true -o $destination
 if($LASTEXITCODE -ne 0){throw 'Music host publish failed.'}
-foreach($file in @('LICENSE','NOTICE.md','README.md','README.en.md')){Copy-Item -LiteralPath (Join-Path $root $file) -Destination $destination}
+foreach($file in @('LICENSE','NOTICE.md','README.md','README.en.md','CHANGELOG.md')){Copy-Item -LiteralPath (Join-Path $root $file) -Destination $destination}
 Copy-Item -LiteralPath (Join-Path $root 'docs') -Destination $destination -Recurse
 foreach($relative in @('EndfieldChargePlus.runtimeconfig.json','MusicPlayerHost.runtimeconfig.json')){
  $config=Get-Content -LiteralPath (Join-Path $destination $relative) -Raw | ConvertFrom-Json
@@ -24,15 +24,14 @@ foreach($relative in @('EndfieldChargePlus.runtimeconfig.json','MusicPlayerHost.
 }
 if(!(Test-Path -LiteralPath (Join-Path $destination 'nonstop\LICENSE'))){throw 'NonStop license missing.'}
 $installerOutput=Join-Path $root 'artifacts\installer'
-$hubDestination=Join-Path $destination 'SharedHubPayload'
-New-Item -ItemType Directory -Path (Join-Path $hubDestination 'core') -Force | Out-Null
-$hubSource=Join-Path $root 'integrations\gemini-hub'
-# An explicit allowlist excludes credentials, policy, history, usage and private logs.
-Get-ChildItem -LiteralPath (Join-Path $hubSource 'core') -File | Where-Object {$_.Extension -in '.js','.json'} | ForEach-Object {Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $hubDestination 'core')}
-Get-ChildItem -LiteralPath $hubSource -File | Where-Object {$_.Extension -in '.ps1','.cmd','.md' -and $_.Name -notlike 'Test*'} | ForEach-Object {Copy-Item -LiteralPath $_.FullName -Destination $hubDestination}
-& (Join-Path $PSScriptRoot 'Get-HubRuntime.ps1') -Destination (Join-Path $hubDestination 'runtime') -ExistingRuntime $ExistingNodeRuntime
-if(Test-Path -LiteralPath (Join-Path $hubDestination 'policy.json')){throw 'Private policy cannot be packaged.'}
-& $compiler '/Qp' "/DPayloadDir=$destination" "/DHubPayloadDir=$hubDestination" "/DAppVersion=$version" "/DOutputDir=$installerOutput" (Join-Path $root 'installer\EndfieldIsland.iss')
+# Only the current native runtime and current documentation ship.
+$shippingCode=Get-ChildItem -LiteralPath (Join-Path $root 'src\EndfieldIsland') -Recurse -File -Filter '*.cs' | Where-Object {$_.FullName -notmatch '[\\/](bin|obj)[\\/]'}
+foreach($file in $shippingCode){
+ if((Get-Content -LiteralPath $file.FullName -Raw) -match 'XngConnection|Start-XNG|core[\\/]xng\.js|127\.0\.0\.1:8889|http://127\.0\.0\.1:8890'){throw 'Retired runtime dependency found. Packaging was stopped.'}
+}
+if(Get-ChildItem -LiteralPath $destination -Recurse -File | Where-Object {$_.Name -in 'node.exe','policy.json','gemini-key.dpapi','assistant-backup-keys.dpapi','assistant-backup-state.json','assistant-personas.dpapi','gemini-pool-keys.dpapi','search-secrets.dpapi','usage.sqlite','search-state.sqlite','gemini-pool-state.sqlite'}){throw 'Unexpected runtime or private data in payload.'}
+& (Join-Path $PSScriptRoot 'Test-Distribution.ps1') -PayloadDir $destination
+& $compiler '/Qp' "/DPayloadDir=$destination" "/DAppVersion=$version" "/DOutputDir=$installerOutput" (Join-Path $root 'installer\EndfieldIsland.iss')
 if($LASTEXITCODE -ne 0){throw 'Installer compilation failed.'}
 $setup=Join-Path $installerOutput "Endfield-Dynamic-Island-Setup-v$version-$Runtime.exe"
 $hash=(Get-FileHash -LiteralPath $setup -Algorithm SHA256).Hash.ToLowerInvariant()

@@ -22,11 +22,19 @@ public sealed class GpuLiveApplication : Application
             {
                 using var hub=new VariableHub();var settings=CustomHudSettings.CreateDefault();
                 var profile=settings.Profiles.Single(x=>x.BuiltInKey=="system.overview");
-                var values=await hub.SnapshotAsync(settings,HudProfileRenderer.GetRequiredVariables(profile));
+                if(desktop.Args?.Contains("--hud-copy-live")==true)
+                {
+                    var path=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"EndfieldChargePlus","settings.json");
+                    var current=System.Text.Json.JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(path),new System.Text.Json.JsonSerializerOptions{PropertyNameCaseInsensitive=true})!;
+                    settings=HudSettingsNormalizer.Normalize(current.CustomHud);
+                    profile=settings.Profiles.Single(x=>x.Id==settings.ActiveProfileId);
+                    Console.WriteLine($"Active layout: {profile.PresentationLayout}; builtin: {profile.IsBuiltIn}");
+                }
+                var values=await hub.SnapshotAsync(settings,HudProfileRenderer.GetRequiredVariables(profile),profile.GpuAdapterId);
                 var data=HudProfileRenderer.Render(profile,values);
                 hud.ApplySettings(new AppSettings{AlwaysVisible=true,GlobalScale=1,ShowClock=true});
                 await hud.ShowPersistentAsync(data);await Task.Delay(1000);
-                values=await hub.SnapshotAsync(settings,HudProfileRenderer.GetRequiredVariables(profile));
+                values=await hub.SnapshotAsync(settings,HudProfileRenderer.GetRequiredVariables(profile),profile.GpuAdapterId);
                 data=HudProfileRenderer.Render(profile,values);hud.UpdatePersistent(data);await Task.Delay(400);
                 foreach(var metric in data.Metrics!)Console.WriteLine($"{metric.Label}: {metric.Value}; {metric.Detail}");
                 var content=(Control)hud.Content!;

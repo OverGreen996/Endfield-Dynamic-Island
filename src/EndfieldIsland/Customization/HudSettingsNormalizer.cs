@@ -137,6 +137,7 @@ public static class HudSettingsNormalizer
         {
             IsBuiltIn = false,
             BuiltInKey = "",
+            PresentationLayout = NormalizePresentationLayout(p),
             Category = "自訂",
             Name = name,
             TimeTarget = NormalizeTargetTime(p.TimeTarget),
@@ -145,6 +146,22 @@ public static class HudSettingsNormalizer
             ProbePort = NormalizeProbePort(p.ProbePort),
             ColorRules = p.ColorRules?.Select(x => x with { }).ToList() ?? new List<HudColorRule>()
         };
+    }
+
+    private static string NormalizePresentationLayout(HudProfile p)
+    {
+        if (string.Equals(p.PresentationLayout, "SystemOverview", StringComparison.OrdinalIgnoreCase))
+            return "SystemOverview";
+        // v0.28.8 and earlier dropped the overview identity when saving a copy. Recover only
+        // its distinctive empty-template fingerprint; ordinary/custom template HUDs stay unchanged.
+        bool legacyOverview = string.IsNullOrWhiteSpace(p.PresentationLayout)
+            && p.TaglineTemplate == "/// SYSTEM TELEMETRY"
+            && p.PrimaryTemplate == "" && p.SecondaryTemplate == ""
+            && p.RightTemplate == "" && p.RightSuffix == ""
+            && p.ProgressVariable == "cpu.usage" && p.ProgressMin == 0 && p.ProgressMax == 100
+            && p.LeftIcon == "cpu" && p.RightIcon == "gpu"
+            && (p.TitleTemplate == "效能總覽" || p.TitleTemplate == "Performance Overview");
+        return legacyOverview ? "SystemOverview" : "";
     }
 
     private static string NormalizeLegacyLabel(string value) => value switch

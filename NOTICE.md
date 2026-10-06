@@ -58,8 +58,6 @@ LibreHardwareMonitor itself includes additional third-party components under the
 
 ### Runtime / transitive dependencies
 
-Windows Setup includes the official Node.js 24.21.0 x64 runtime for the shared Gemini Hub. Its complete upstream license and third-party notices are installed as `Documents/ChatGPT/GeminiHub/runtime/LICENSE`. Upstream: https://github.com/nodejs/node/tree/v24.21.0. The executable SHA256 is pinned and checked by `scripts/Get-HubRuntime.ps1`.
-
 Self-contained builds also carry the .NET runtime and transitive dependencies brought in by the packages above. Their original license metadata and upstream notices remain applicable. When preparing a public binary release, keep this notice together with the source release information and retain all license files required by the corresponding upstream components.
 
 ## This derivative / 本衍生版本

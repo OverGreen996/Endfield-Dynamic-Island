@@ -31,7 +31,7 @@ public sealed class AllEdgeApplication:Application
                 foreach(var window in new Window[]{ai,notice})foreach(double width in new[]{420d,560d})
                 {
                     if(window==ai){ai.ShowInput(new AppSettings());ai.ApplyViewportLayout(width-16,360);}else{notice.ShowNotification(NotificationCard.Create("qa/edge","Edge QA","通知邊緣","合成資料",DateTimeOffset.Now),new AppSettings{DisplayDurationSeconds=10});notice.Width=width;}
-                    await Task.Delay(250);
+                    await Task.Delay(window==notice?3300:250);
                     string method=window==ai?"UpdateInputRegion":"UpdateRegion";window.GetType().GetMethod(method,BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(window,null);
                     var content=(Control)window.Content!;double scale=window.RenderScaling;
                     using var image=new RenderTargetBitmap(new PixelSize((int)Math.Ceiling(window.Bounds.Width*scale),(int)Math.Ceiling(window.Bounds.Height*scale)),new Vector(96*scale,96*scale));image.Render(content);
@@ -42,7 +42,7 @@ public sealed class AllEdgeApplication:Application
                     Check(lost==0,"all painted AA edge pixels retained: "+window.GetType().Name+width+" lost="+lost);
                     Check(zeroBlocked==0,"all zero-alpha pixels excluded: "+window.GetType().Name+width+" blocked="+zeroBlocked);
                     Check(aa>50,"real render includes smooth fractional alpha: "+window.GetType().Name+width);
-                    if(window==notice){bool arc=true;for(int degrees=5;degrees<=85;degrees+=5){double angle=degrees*Math.PI/180;int count=0;for(double r=55;r<60;r+=.25){int x=(int)((window.Bounds.Width-8-60+Math.Cos(angle)*r)*scale),y=(int)((window.Bounds.Height-8-60+Math.Sin(angle)*r)*scale);var c=pixels.GetPixel(x,y);if(c.Red>160&&c.Green>160&&c.Blue<100)count++;}if(count<8||count>19)arc=false;}Check(arc,"notification yellow quarter-ring fits curved edge: "+width);}
+                    if(window==notice)Check(notice.FindControl<Avalonia.Controls.Shapes.Path>("CountdownArc")!.Data is not null&&!notice.FindControl<Avalonia.Controls.Shapes.Path>("EdgeAccent")!.IsVisible,"notification uses original circular countdown without outer edge decoration: "+width);
                     if(window==ai)ai.HideIsland();else notice.HideIsland();
                 }
                 Console.WriteLine($"{passed}/{passed} PASS; production shared masks on real native windows at current Windows DPI.");

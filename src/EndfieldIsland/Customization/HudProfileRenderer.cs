@@ -73,7 +73,8 @@ public static class HudProfileRenderer
         return keys;
     }
 
-    private static bool IsOverview(HudProfile profile)=>profile.BuiltInKey=="system.overview";
+    private static bool IsOverview(HudProfile profile)=>profile.BuiltInKey=="system.overview"
+        || string.Equals(profile.PresentationLayout,"SystemOverview",StringComparison.OrdinalIgnoreCase);
     private static IReadOnlyList<HudMetric> BuildOverview(IReadOnlyDictionary<string,object?> values)
     {
         double? Number(string key){double n=TemplateEngine.Number(key,values,double.NaN);return double.IsFinite(n)?n:null;}

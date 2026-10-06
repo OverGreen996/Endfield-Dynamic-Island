@@ -42,6 +42,7 @@ public static class IndustrialFeatureProbe
         Check(((ComboBoxItem)modes.SelectedItem!).Content?.ToString()=="Auto","initial English selected mode renders Auto");modes.SelectedIndex=2;ai.FindControl<TextBox>("InputBox")!.Text="保留中文草稿";
         LocalizationManager.SetLanguage(AppLanguage.TraditionalChinese);Check(modes.SelectedIndex==2&&((ComboBoxItem)modes.SelectedItem!).Content?.ToString()=="只搜尋","Chinese switch preserves selected search mode");
         LocalizationManager.SetLanguage(AppLanguage.English);Check(modes.SelectedIndex==2&&((ComboBoxItem)modes.SelectedItem!).Content?.ToString()=="Search only"&&ai.FindControl<TextBox>("InputBox")!.Text=="保留中文草稿","English switch translates mode without mutating draft");ai.Close();
+        HudProfileSaveProbe.Run(Check);
         Console.WriteLine($"{passed}/{passed} PASS; isolated local assets/settings, no API calls.");
     }
 }

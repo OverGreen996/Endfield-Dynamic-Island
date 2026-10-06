@@ -23,7 +23,7 @@ public sealed class PersonalUiApplication : App
         Call("DisposePersonalAssistant");
         string root=Path.Combine(Path.GetTempPath(),"IslandPersonalUi-"+Guid.NewGuid().ToString("N"));
         var store=new PersonalAssistantStore(Path.Combine(root,"personal.dpapi"));Field("_personalStore",store);Call("InitializePersonalAssistant");
-        store.Handle("記住我叫介面測試使用者",DateTimeOffset.Now);store.Handle("記住我喜歡黑色介面",DateTimeOffset.Now);store.Handle("記住以後不要自作主張替我做決定",DateTimeOffset.Now);
+        PersonalTestData.Memory(store,"我叫介面測試使用者","身分稱呼");PersonalTestData.Memory(store,"我喜歡黑色介面","介面偏好");PersonalTestData.Memory(store,"以後不要自作主張替我做決定","互動界線");
         var session=new AssistantSession(Path.Combine(root,"session.dpapi"));
         for(int i=0;i<15;i++)session.Append("介面驗收：輸入與送出列不能被切到。",new AssistantReply("這是本機合成的對話。長內容會留在捲動區，底部輸入與按鈕固定保留空間；沒有送出 Gemini。","local",null,false,null,null,null));
         var ai=new AssistantIslandWindow(store,session){Title="AI v18 本機驗收"};Field("_assistant",ai);ai.IslandHidden+=()=>Call("RestoreHud");

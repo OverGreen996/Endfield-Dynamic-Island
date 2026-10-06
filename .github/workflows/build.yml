@@ -6,7 +6,7 @@ on:
 permissions:
   contents: read
 jobs:
-  gemini-hub:
+  music-bridge:
     runs-on: windows-latest
     timeout-minutes: 5
     steps:
@@ -14,11 +14,9 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
-      - name: Shared Hub checks (synthetic policy, no model or private data)
+      - name: Music bridge checks (development tooling only)
         shell: pwsh
         run: |
-          ./integrations/gemini-hub/Test.ps1
-          ./integrations/gemini-hub/Test-Setup.ps1
           node --test tests/player-bridge.test.cjs
   build:
     runs-on: windows-latest
@@ -31,6 +29,7 @@ jobs:
       - name: Build both projects
         shell: pwsh
         run: |
+          ./scripts/Test-Distribution.ps1
           dotnet build src/EndfieldIsland/EndfieldChargePlus.csproj -c Release
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet build src/MusicPlayerHost/MusicPlayerHost.csproj -c Release
@@ -41,7 +40,7 @@ jobs:
         shell: pwsh
         run: |
           $dll='tests/IslandRegression/bin/Release/net8.0-windows10.0.19041.0/IslandRegression.dll'
-          foreach ($flag in @('--unit','--music-unit','--notification-unit','--personal-unit','--image-unit','--performance-unit')) {
+          foreach ($flag in @('--assistant-native','--unit','--music-unit','--notification-unit','--personal-unit','--image-unit','--performance-unit')) {
             dotnet $dll $flag
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }

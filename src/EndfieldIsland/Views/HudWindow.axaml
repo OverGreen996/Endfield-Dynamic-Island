@@ -105,18 +105,18 @@
 
           <Grid x:Name="CircleForm">
             <Ellipse Width="32" Height="32" Fill="#FFE9E7E4"/>
-            <PathIcon x:Name="CircleGlyph" Width="18" Height="18"
+            <Path x:Name="CircleGlyph" Width="18" Height="18" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
                       Data="{DynamicResource Geo.Bolt}"
-                      Foreground="#FF141313"/>
+                      Fill="#FF141313"/>
           </Grid>
 
           <Grid x:Name="SquareForm" Opacity="0">
             <Border Width="18" Height="18" CornerRadius="4.5"
                     Background="#FFE9E7E4"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
-              <PathIcon x:Name="SquareGlyph" Width="12" Height="12"
+              <Path x:Name="SquareGlyph" Width="12" Height="12" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
                         Data="{DynamicResource Geo.Bolt}"
-                        Foreground="#FF141313"/>
+                        Fill="#FF141313"/>
             </Border>
           </Grid>
         </Grid>
@@ -203,10 +203,10 @@
                     HorizontalAlignment="Center" VerticalAlignment="Center"
                     Margin="0,-14,0,0"/>
 
-            <PathIcon x:Name="BadgeGlyph"
+            <Path x:Name="BadgeGlyph"
                       Width="21" Height="21"
                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                      Foreground="#FFC6CA4C"
+                      Fill="#FFC6CA4C" Stretch="Uniform"
                       IsVisible="False"/>
           </Grid>
           <Border x:Name="OverviewIdentity" Grid.ColumnSpan="9" Width="72" Height="80" CornerRadius="14"
@@ -220,7 +220,7 @@
             <TextBlock Text="SYSTEM PERFORMANCE" FontSize="16" FontWeight="SemiBold" LetterSpacing="1" Foreground="#F3F4ED"/>
             <TextBlock Text="ENDFIELD / TELEMETRY" FontFamily="Consolas" FontSize="9" LetterSpacing="1.4" Foreground="#C1C6BB"/>
           </StackPanel>
-          <Grid x:Name="OverviewHost" Grid.ColumnSpan="9" Margin="112,0,24,7" VerticalAlignment="Bottom" ColumnDefinitions="*,*,*,*" Height="54" IsVisible="False"/>
+          <Grid x:Name="OverviewHost" Grid.ColumnSpan="9" Margin="64,0,88,0" VerticalAlignment="Center" ColumnDefinitions="*,*,*,*" Height="46" IsVisible="False"/>
         </Grid>
 
         <Grid x:Name="ClockHost"

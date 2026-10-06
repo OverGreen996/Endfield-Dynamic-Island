@@ -1,8 +1,27 @@
 using System.Text.Json;
 using Avalonia;
 using EndfieldChargePlus.Assistant;
+if(args.Contains("--ocr-image-live")){await OcrIntentLiveProbe.ImageOnlyAsync(args.First(a=>a.StartsWith("--image=")).Split('=',2)[1]);return;}
+if(args.Contains("--cf-fast-reply")){await CloudflareFastReplyProbe.RunAsync();return;}
+if(args.Contains("--groq-responsibilities-live")||args.Contains("--responsibilities-live")){await ProviderResponsibilitiesLiveProbe.RunAsync(args.FirstOrDefault(a=>a.StartsWith("--provider="))?.Split('=',2)[1]??"groq",args.FirstOrDefault(a=>a.StartsWith("--case="))?.Split('=',2)[1],args.FirstOrDefault(a=>a.StartsWith("--cf-effort="))?.Split('=',2)[1],args.Contains("--one-call"));return;}
+if(args.Contains("--ocr-intent-live")){await OcrIntentLiveProbe.RunAsync();return;}
+if(args.Contains("--split-work-live")){await SplitWorkLiveProbe.RunAsync();return;}
+if(args.Contains("--local-ocr")){await LocalOcrProbe.RunAsync();return;}
+if(args.Contains("--assistant-quality-live")){await AssistantQualityLiveProbe.RunAsync(args.FirstOrDefault(a=>a.StartsWith("--provider="))?.Split('=',2)[1],args.Contains("--dialogue-only"));return;}
+if(args.Contains("--original-hud-test")){Environment.ExitCode=AppBuilder.Configure<OriginalHudApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
+if(args.Contains("--personas-pool")){await PersonaAndPoolProbe.RunAsync();return;}
+if(args.Contains("--personas-layout")){PersonaLayoutProbe.Run();return;}
+if(args.Contains("--conversation-live")){await ConversationLiveProbe.RunAsync();return;}
+if(args.Contains("--ai-backups-layout")){AiBackupLayoutProbe.Run();return;}
+if(args.Contains("--ai-backups")){await AiBackupProbe.RunAsync();return;}
+if(args.Contains("--reply-reveal")){Environment.ExitCode=AppBuilder.Configure<ReplyRevealApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
+if(args.Contains("--assistant-native-live")){await NativeAssistantProbe.LiveAsync();return;}
+if(args.Contains("--ai-personal-live")){await AiPersonalIntentProbe.LiveAsync();return;}
+if(args.Contains("--native-search-layout")){NativeSearchLayoutProbe.Run();return;}
+if(args.Contains("--memory-palace-layout")){MemoryPalaceLayoutProbe.Run();return;}
+if(args.Contains("--assistant-native")){await NativeAssistantProbe.RunAsync();return;}
 if(args.Contains("--gpu-live")){await GpuTelemetryProbe.LiveAsync();return;}
-if(args.Contains("--gpu-live-ui")){Environment.ExitCode=AppBuilder.Configure<GpuLiveApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
+if(args.Contains("--gpu-live-ui")||args.Contains("--hud-copy-live")){Environment.ExitCode=AppBuilder.Configure<GpuLiveApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
 if(args.Contains("--gpu-unit")){GpuTelemetryProbe.Unit();return;}
 if(args.Contains("--settings-chrome")||args.Contains("--settings-ui")){Environment.ExitCode=AppBuilder.Configure<SettingsChromeApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
 if(args.Contains("--performance-baseline")){await StartupPerformanceProbe.BaselineAsync();return;}

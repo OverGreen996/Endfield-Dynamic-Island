@@ -1,32 +1,25 @@
-# 安裝「終末地 靈動島」
+# 安裝與使用
 
-1. 到 [GitHub Releases](https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest) 下載 `Endfield-Dynamic-Island-Setup-v0.26.0-win-x64.exe`。另有 SHA256 可核對完整性。
-2. 從系統匣退出舊版，執行 Setup，選擇繁體中文或 English。
-3. 預設安裝到 `%LocalAppData%\Programs\EndfieldDynamicIsland`，可更換位置。安裝至目前使用者，不需要管理員權限。
-4. 選擇桌面捷徑，核對位置後安裝。從桌面或開始功能表開啟。
-5. 設定顯示器、位置、縮放；通知權限由使用者在設定自行要求，安裝程式不會代為啟用。
-6. 音樂貼上自己的 YouTube 清單。專用清單需要 Microsoft Edge WebView2 Runtime，Setup 不會自動下載它。
+1. 使用 `Endfield-Dynamic-Island-Setup-v0.28.14-win-x64.exe`，先從系統匣退出舊版。
+2. 安裝至目前 Windows 使用者；不需管理員權限，不另裝 Node、Docker 或資料庫。
+3. 到設定 → AI 助理貼上自己的 Gemini Key，確認免費方案後儲存。設定立即生效，儲存與查詢本機用量不呼叫模型。
+4. AI 右鍵 → 搜尋 API 與輪替，貼上 Exa、Tavily、Firecrawl 金鑰，設定順序；Firecrawl 可設定每月帳單切換日與時間（台灣時間）。
 
-本程式未簽署商業憑證，SHA256 不代表 Authenticode 簽章。
+安裝包包含主程式、.NET 執行環境及音樂播放器，不含私人金鑰或資料。AI 與搜尋直接在主程式內運行，不需另外啟動背景服務或設定腳本。
 
-## AI 與搜尋
+既有金鑰與用量紀錄保留。沒有軟體自行設定的每日/每分鐘次數及累計 token 限額，以供應商 API 的限制決定輪替。原政策檔內的舊上限欄位僅為相容資料，在新執行模式不會阻擋請求。Google 全專案用量仍需在 AI Studio 核對。
 
-安裝包包含前端、.NET runtime、播放器、Gemini Hub 0.4.0 與已核對 SHA256 的 Node 24.21.0。**不包含 XNG、金鑰或任何私人設定。**
+設定 → AI 助理 → AI 模型備援，可加入 Groq GPT-OSS 120B 與 Cloudflare Qwen3-30B-A3B。順序 Gemini → Groq → Cloudflare，三家直接由主程式呼叫。金鑰空白保留既有設定，勾選移除才清除；儲存不發出 API 請求，測試按鈕使用一次模型。註冊步驟見 [AI 備援設定](AI-FALLBACK.md)。
 
-AI 使用 `127.0.0.1:8890` 的本機 Gemini Hub，服務程式、驗證檔及工具在 Windows「文件」的 `ChatGPT/GeminiHub`。安裝程式建立本機驗證與帳本；初次安裝預設停用模型呼叫。到設定 → AI 助理貼上自己的金鑰，勾選已確認 Free／未啟用付費後按「儲存並套用金鑰」，不需要另裝 Node 或手動啟動服務。設定與啟動不呼叫 Google。
+自動模式先理解問題，再決定是否搜尋；Gemini／Groq 一般聊天通常兩次模型生成，CF 一般聊天合併為一次，必要澄清一次。多餘追問最多補一次重寫。搜尋＋AI 通常一次規劃、一次資料整理。只搜尋模式不呼叫 Gemini。Ctrl+V 貼圖先預覽，送出後本機 OCR 讀字；已設定 AI 時，只貼圖也會理解文字並承接前文回應；沒有 AI 金鑰或只搜尋模式無附加文字時才只擷取文字。圖片不寫入長期記憶。
 
-既有同一金鑰的限制、帳本與私人檔案保留。新金鑰的預設本機上限為 20 次／日、3 次／分鐘，這不是 Google 實際配額；要提高限制必須先核對自己的專案。Google 全專案剩餘額度仍需在 AI Studio 查詢。已運行的 Hub 安裝時會保留；更新核心後執行 `Restart-GeminiHub.ps1`，或在 AI 設定重新套用同一把金鑰，明確重啟生效。服務異常會在安裝完成頁顯示，不接管占用 8890 的其他程式。
+Exa、Tavily 無本機額度上限。任何 API 搜尋失敗（包含逾時、頻率限制、金鑰或額度錯誤）即停用至下個月 2 號台灣時間 00:05，依序改用其他可用供應商（Exa → Tavily → Firecrawl）。到期於下一次搜尋重試；再次失敗則延至再下一個月 2 號。手動取消不算失敗。這是本機重試規則，不代表官方額度補發時間。Tavily/Firecrawl 可在設定查詢官方剩餘點數；計數不會因重開或重設金鑰而歸零。
 
-AI 輸入框按 `Ctrl+V` 貼圖，預覽不呼叫模型，送出才判讀。聊天模式通常一次 Gemini；辨識後再搜尋並整理通常兩次。失敗請求也可能扣額度，以 Hub 帳本為準。
+AI 資料沿用 Windows「文件」的 `ChatGPT/GeminiHub`，搜尋位於其 `data/search`。這只是相容資料位置，不再需要其舊服務程式。Daily 的資料獨立。
 
-[XNG-Plugin](https://github.com/OverGreen996/XNG-Plugin) 由每位使用者自行架設，與 Gemini Hub 分開管理。本儲存庫提供 [Hub 原始碼及獨立部署說明](../integrations/gemini-hub)。自動模式先由 Gemini 理解，再交 XNG 找資料；一般聊天通常一次、搜尋通常兩次生成，均計次。「只搜尋」不呼叫 Gemini。
+HUD、通知、提醒與記憶使用 `%LocalAppData%/EndfieldChargePlus`。解除安裝保留個人資料。DPAPI 綁定 Windows 使用者，重灌後不能保證仍能解密。
 
-## 更新及解除安裝
+音樂快捷鍵 Alt+M、AI 快捷鍵 Alt+A。YouTube 清單播放使用 WebView2；跟隨瀏覽器模式使用 Windows 媒體介面。程式須運行才能提醒，不會喚醒睡眠或關機的電腦。
+Exa 的舊美元上限與 Tavily 的舊點數上限會自動移除，用量紀錄與金鑰保留。設定頁顯示失敗原因及恢復時間；不需手動解封。
 
-退出程式後執行新版 Setup，相同識別沿用安裝位置與捷徑選項。既有開機啟動若已啟用會更新到新位置；未啟用者不會被強制開啟。
-
-Windows「已安裝的應用程式」可解除安裝。程式與安裝建立的捷徑會移除；`%LocalAppData%\EndfieldChargePlus` 中的設定、對話、提醒、記憶及播放器環境會保留。獨立 XNG／Gemini Hub 不會移除。
-
-## 重灌
-
-重新下載 Setup，即可重建 Gemini Hub；到 AI 設定輸入自己的金鑰並確認免費方案。XNG 仍使用其獨立的一鍵部署工具。DPAPI 加密內容不能保證跨重灌解密。設定匯出可能含私人服務設定，請自行保存，不要公開上傳。
+Tavily 的官方餘額僅供參考，搜尋前不查詢，也不以餘額封鎖。查詢餘額不會解除或延長其搜尋失敗封鎖。Firecrawl 也移除本機點數上限，使用 API 核對官方剩餘點數。依你的帳單設定日期與時間；不足時停用至該日，到期在下一次搜尋重新核對，尚未補點數則隔一小時再查。查詢官方餘額可提前核對並恢復。月分沒有該日則使用月底。

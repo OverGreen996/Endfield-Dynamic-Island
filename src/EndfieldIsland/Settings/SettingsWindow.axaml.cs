@@ -26,7 +26,7 @@ namespace EndfieldChargePlus.Settings;
 
 public partial class SettingsWindow : Window
 {
-    private readonly AssistantHubClient _geminiHub = new();
+    private readonly AssistantClient _assistantClient = new();
     private CancellationTokenSource? _geminiKeyRequest;
     private bool _savingGeminiKey, _geminiSettingsClosed;
     public event Action? AssistantRequested;
@@ -86,6 +86,9 @@ public partial class SettingsWindow : Window
     public static UpdateCheckResult? LastUpdateResult => _lastUpdateResult;
 
     private AppSettings _settings;
+    private AiBackupSettingsWindow? _aiBackups;
+    private AssistantPersonaWindow? _personas;
+    private GeminiPoolWindow? _geminiPoolWindow;
     private readonly HudWindow _hud;
     private readonly CustomHudRuntime _runtime;
     private readonly Action<AppSettings> _saveSettings;
@@ -163,9 +166,23 @@ public partial class SettingsWindow : Window
         GeminiKeyInput.TextChanged += (_, _) => RefreshKeySubmit();
         GeminiFreeConfirmation.IsCheckedChanged += (_, _) => RefreshKeySubmit();
         SaveGeminiKeyBtn.Click += async (_, _) => await SaveGeminiKeyAsync();
+        OpenAiBackupsBtn.Click+=(_,_)=>{
+            try{if(_aiBackups is null){_aiBackups=new AiBackupSettingsWindow();_aiBackups.Closed+=(_,_)=>_aiBackups=null;}_aiBackups.Show();_aiBackups.Activate();}
+            catch{GeminiKeyStatusText.Text=LocalizationManager.Text("AI 備援設定無法開啟，請檢查本機資料。","Cannot open AI fallback settings. Check local data.");}
+        };
+        Closed+=(_,_)=>_aiBackups?.Close();
+        OpenGeminiPoolBtn.Click+=(_,_)=>{
+            try{if(_geminiPoolWindow is null){_geminiPoolWindow=new GeminiPoolWindow();_geminiPoolWindow.Closed+=(_,_)=>_geminiPoolWindow=null;}_geminiPoolWindow.Show();_geminiPoolWindow.Activate();}
+            catch{GeminiKeyStatusText.Text=LocalizationManager.Text("Gemini 輪換設定暫時無法開啟。","Gemini rotation settings could not be opened.");}
+        };
+        Closed+=(_,_)=>_geminiPoolWindow?.Close();
+        OpenPersonasBtn.Click+=(_,_)=>{
+            try{if(_personas is null){_personas=new AssistantPersonaWindow();_personas.Closed+=(_,_)=>_personas=null;}_personas.Show();_personas.Activate();}
+            catch{GeminiKeyStatusText.Text=LocalizationManager.Text("人格設定暫時無法開啟。","Persona settings could not be opened.");}
+        };
         RefreshGeminiUsageBtn.Click += async (_, _) => await RefreshGeminiUsageAsync();
         Opened += async (_, _) => await RefreshGeminiUsageAsync();
-        Closed += (_, _) => { _geminiSettingsClosed = true; GeminiKeyInput.Text = ""; _geminiKeyRequest?.Cancel(); _geminiHub.Dispose(); };
+        Closed += (_, _) => { _geminiSettingsClosed = true; GeminiKeyInput.Text = ""; _geminiKeyRequest?.Cancel(); _assistantClient.Dispose(); };
         OpenSettingsFolderBtn.Click += OnOpenSettingsFolder;
         ResetSizeAnimationBtn.Click += OnResetSizeAnimation;
         ExportSettingsBtn.Click += OnExportSettings;
@@ -220,10 +237,10 @@ public partial class SettingsWindow : Window
         try
         {
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            var status = await _geminiHub.UsageAsync(timeout.Token);
+            var status = await _assistantClient.UsageAsync(timeout.Token);
             if (!_geminiSettingsClosed) GeminiKeyStatusText.Text = status;
         }
-        catch { if (!_geminiSettingsClosed) GeminiKeyStatusText.Text = "共用 AI 服務尚未就緒；可在此輸入金鑰並套用。"; }
+        catch { if (!_geminiSettingsClosed) GeminiKeyStatusText.Text = "靈動島 AI 服務尚未就緒；可在此輸入金鑰並套用。"; }
         finally { if (!_geminiSettingsClosed) RefreshGeminiUsageBtn.IsEnabled = true; }
     }
 

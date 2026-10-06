@@ -4,7 +4,6 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using EndfieldChargePlus.Assistant;
 using System.Globalization;
-using Avalonia.LogicalTree;
 
 namespace EndfieldChargePlus.Views;
 
@@ -14,23 +13,25 @@ public sealed class MemoryPalaceWindow : Window
     private readonly PersonalAssistantStore _store;
     private readonly StackPanel _memories=new(){Spacing=12},_reminders=new(){Spacing=12};
     private readonly TextBlock _status=new(){TextWrapping=TextWrapping.Wrap,Foreground=Brush.Parse("#EAEF24")};
+    private readonly TextBlock _intro=new(){TextWrapping=TextWrapping.Wrap,FontSize=12,Foreground=Brush.Parse("#B4BDB7")};
+    private readonly TabItem _memoryTab=new(),_reminderTab=new();
     private static readonly IBrush White=Brush.Parse("#F0F1ED");
     private bool _dirty,_refreshPending,_sized;
-    private bool _localizing;
     private string? _statusMessage;
-    private sealed record CategoryChoice(string Key){public override string ToString()=>LocalizationManager.TranslateLiteral(Key);}
     private readonly List<Action> _localizeDetails=new();
     public MemoryPalaceWindow(PersonalAssistantStore? store=null)
     {
         _store=store??PersonalAssistantStore.Shared;
         Title="記憶宮殿與定時提醒";Width=760;Height=650;MinWidth=380;MinHeight=320;
-        Background=Brush.Parse("#191D1D");Classes.Add("industrial");
-        var root=new Grid{Margin=new Thickness(20),RowDefinitions=new RowDefinitions("Auto,Auto,*")};
-        root.Children.Add(new TextBlock{Text="記憶宮殿",FontSize=22,Foreground=White});
+        Background=Brush.Parse("#191D1D");RequestedThemeVariant=Avalonia.Styling.ThemeVariant.Dark;Classes.Add("industrial");
+        var heading=new TextBlock{Text="記憶宮殿",FontSize=22,Foreground=White};
         var intro=new StackPanel{Spacing=6,Margin=new Thickness(0,8,0,14)};
-        intro.Children.Add(new TextBlock{Text="保存你的身分、偏好與交代事項。閒聊與假設不當成個人事實；可逐筆修改或刪除。\n僅選取背景提供給 Gemini 對話；提醒在本機執行，不呼叫模型。刪除記憶不會刪掉聊天紀錄；若不想沿用舊聊天內容，請開新對話。",TextWrapping=TextWrapping.Wrap,FontSize=12,Foreground=Brush.Parse("#B4BDB7")});
-        intro.Children.Add(_status);Grid.SetRow(intro,1);root.Children.Add(intro);
-        var tabs=new TabControl{ItemsSource=new[]{new TabItem{Header="個人記憶",Content=Scroll(_memories)},new TabItem{Header="定時提醒",Content=Scroll(_reminders)}}};
+        intro.Children.Add(_intro);
+        intro.Children.Add(_status);
+        _memoryTab.Content=Scroll(_memories);_reminderTab.Content=Scroll(_reminders);
+        var tabs=new TabControl{HorizontalAlignment=HorizontalAlignment.Left,VerticalAlignment=VerticalAlignment.Top,HorizontalContentAlignment=HorizontalAlignment.Stretch,ItemsSource=new[]{_memoryTab,_reminderTab}};
+        var root=new PalaceLayoutGrid(tabs,heading,intro,_memories,_reminders){Background=Background,Margin=new Thickness(20),ColumnDefinitions=new ColumnDefinitions("*"),RowDefinitions=new RowDefinitions("Auto,Auto,*")};
+        root.Children.Add(heading);Grid.SetRow(intro,1);root.Children.Add(intro);
         Grid.SetRow(tabs,2);root.Children.Add(tabs);Content=root;
         _store.Changed+=RequestRefresh;LocalizationManager.LanguageChanged+=ApplyLanguage;Closed+=(_,_)=>{_store.Changed-=RequestRefresh;LocalizationManager.LanguageChanged-=ApplyLanguage;};
         Opened+=(_,_)=>{if(!_sized){_sized=true;var area=Screens.Primary?.WorkingArea;var scale=Screens.Primary?.Scaling??1;if(area is {}a){Width=Math.Min(760,a.Width/scale-32);Height=Math.Min(650,a.Height/scale-48);MinWidth=Math.Min(MinWidth,Width);MinHeight=Math.Min(MinHeight,Height);}}if(_refreshPending&&!_dirty)Refresh();};
@@ -38,20 +39,34 @@ public sealed class MemoryPalaceWindow : Window
     }
     private void ApplyLanguage()
     {
-        _localizing=true;
-        try
-        {
-            LocalizationManager.ApplyStaticText(this);UpdateStatus();foreach(var update in _localizeDetails)update();
-            foreach(var combo in this.GetLogicalDescendants().OfType<ComboBox>())
-            {
-                if(combo.SelectedItem is not CategoryChoice selected)continue;
-                var choices=PersonalAssistantStore.Categories.Select(key=>new CategoryChoice(key)).ToArray();combo.ItemsSource=choices;combo.SelectedItem=choices.Single(c=>c.Key==selected.Key);
-            }
-        }
-        finally{_localizing=false;}
+        LocalizationManager.ApplyStaticText(this);UpdateStatus();
+        _memoryTab.Header=LocalizationManager.Text("個人記憶","Personal memory");
+        _reminderTab.Header=LocalizationManager.Text("定時提醒","Reminders");
+        _intro.Text=LocalizationManager.Text(
+            "AI 理解對話後決定是否記憶，並建立合適的中文分類，不需要特定口令。你可以逐筆修改文字、分類或刪除。\n提醒由 AI 理解時間與事項，到點後在本機執行。刪除記憶不會刪掉聊天紀錄；若不想沿用舊聊天內容，請開新對話。",
+            "AI understands your conversation, decides what to remember and creates suitable Chinese categories. No command phrases are required. Edit or delete any entry or category.\nAI interprets reminder requests; the app delivers reminders locally. Deleting memories keeps chat history. Start a new conversation to stop using old chat context.");
+        foreach(var update in _localizeDetails)update();
     }
     private static ScrollViewer Scroll(Control content)=>new(){Content=content,HorizontalScrollBarVisibility=Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,VerticalScrollBarVisibility=Avalonia.Controls.Primitives.ScrollBarVisibility.Auto};
-    private static TextBlock Label(string text)=>new(){Text=LocalizationManager.TranslateLiteral(text),Foreground=White,TextWrapping=TextWrapping.Wrap,FontSize=12};
+    private TextBlock Label(string text)
+    {
+        var label=new TextBlock{Foreground=White,TextWrapping=TextWrapping.Wrap,FontSize=12};
+        void Update()=>label.Text=LocalizationManager.TranslateLiteral(text);
+        _localizeDetails.Add(Update);Update();return label;
+    }
+    private Button LocalButton(string text,Thickness margin=default)
+    {
+        var button=new Button{Margin=margin};
+        void Update()=>button.Content=LocalizationManager.TranslateLiteral(text);
+        _localizeDetails.Add(Update);Update();return button;
+    }
+    private static string SourceText(string source)
+    {
+        const string prefix="AI 理解本次對話 · 原文：";
+        return LocalizationManager.IsEnglish&&source.StartsWith(prefix,StringComparison.Ordinal)
+            ?"AI understood this conversation · Original quote: "+source[prefix.Length..]
+            :LocalizationManager.TranslateLiteral(source);
+    }
     private static Border Card(Control child)=>new(){Child=child,Padding=new Thickness(14),CornerRadius=new CornerRadius(10),Background=Brush.Parse("#252B2A"),BorderBrush=Brush.Parse("#505A54"),BorderThickness=new Thickness(1)};
     private void UpdateStatus()=>_status.Text=_statusMessage is {}message?LocalizationManager.TranslateLiteral(message):_store.StorageError??LocalizationManager.Text($"個人記憶 {_store.Memories.Count}/200 筆 · 提醒 {_store.Reminders.Count}/300 筆 · 本機加密保存",$"Memory {_store.Memories.Count}/200 · Reminders {_store.Reminders.Count}/300 · Encrypted locally");
     private void RequestRefresh(){_refreshPending=true;if(!_dirty&&IsVisible)Refresh();else if(_dirty){_statusMessage="資料已更新；保留你的編輯草稿，請儲存修改。";UpdateStatus();}}
@@ -63,21 +78,28 @@ public sealed class MemoryPalaceWindow : Window
         _localizeDetails.Clear();
         _statusMessage=null;UpdateStatus();
         _memories.Children.Clear();_reminders.Children.Clear();
-        foreach(var category in PersonalAssistantStore.Categories)
+        if (_store.Memories.Count == 0) {
+            var empty=Label("");void UpdateEmpty()=>empty.Text=LocalizationManager.Text("目前沒有記憶。AI 會理解你的對話，自動建立合適的中文分類。","No memories yet. AI will understand your conversation and create suitable Chinese categories.");
+            _localizeDetails.Add(UpdateEmpty);UpdateEmpty();_memories.Children.Add(empty);
+        }
+        foreach(var category in _store.MemoryCategories)
         {
             var group=_store.Memories.Where(m=>m.Category==category).OrderByDescending(m=>m.Saved).ToArray();
-            var heading=new TextBlock{FontSize=15,Foreground=Brush.Parse("#EAEF24"),Margin=new Thickness(0,8,0,0)};void UpdateHeading()=>heading.Text=$"{LocalizationManager.TranslateLiteral(category)} ({group.Length})";_localizeDetails.Add(UpdateHeading);UpdateHeading();_memories.Children.Add(heading);
+            var heading=new TextBlock{FontSize=15,Foreground=Brush.Parse("#EAEF24"),Margin=new Thickness(0,8,0,0)};void UpdateHeading()=>heading.Text=$"{category} ({group.Length})";_localizeDetails.Add(UpdateHeading);UpdateHeading();_memories.Children.Add(heading);
             if(group.Length==0){_memories.Children.Add(Label("目前沒有內容"));continue;}
             foreach(var memory in group)
             {
                 var panel=new StackPanel{Spacing=8};
                 var editor=new TextBox{Text=memory.Text,AcceptsReturn=true,TextWrapping=TextWrapping.Wrap,MaxLength=500,MinHeight=38};
                 Track(editor);
-                panel.Children.Add(editor);var sourceLabel=Label("");void UpdateSource()=>sourceLabel.Text=LocalizationManager.Text($"來源：{memory.Source} · {memory.Saved.LocalDateTime:yyyy/MM/dd HH:mm} · 編號 {memory.Id}",$"Source: {LocalizationManager.TranslateLiteral(memory.Source)} · {memory.Saved.LocalDateTime:yyyy/MM/dd HH:mm} · ID {memory.Id}");_localizeDetails.Add(UpdateSource);UpdateSource();panel.Children.Add(sourceLabel);
+                panel.Children.Add(editor);var sourceLabel=Label("");void UpdateSource()=>sourceLabel.Text=LocalizationManager.Text($"來源：{memory.Source} · {memory.Saved.LocalDateTime:yyyy/MM/dd HH:mm} · 編號 {memory.Id}",$"Source: {SourceText(memory.Source)} · {memory.Saved.LocalDateTime:yyyy/MM/dd HH:mm} · ID {memory.Id}");_localizeDetails.Add(UpdateSource);UpdateSource();panel.Children.Add(sourceLabel);
                 var actions=new WrapPanel{Orientation=Orientation.Horizontal};
-                var choices=PersonalAssistantStore.Categories.Select(key=>new CategoryChoice(key)).ToArray();var kind=new ComboBox{ItemsSource=choices,SelectedItem=choices.Single(c=>c.Key==memory.Category),Width=160};kind.SelectionChanged+=(_,_)=>{if(!_localizing)_dirty=true;};
-                var save=new Button{Content="儲存修改",Margin=new Thickness(8,0)};save.Click+=(_,_)=>Act(()=>_store.UpdateMemory(memory.Id,(kind.SelectedItem as CategoryChoice)?.Key??memory.Category,editor.Text??""));
-                var delete=new Button{Content="刪除此記憶"};delete.Click+=(_,_)=>Act(()=>_store.DeleteMemory(memory.Id));
+                var categoryLabel=Label("");panel.Children.Add(categoryLabel);
+                var kind=new TextBox{Text=memory.Category,Width=160,MaxLength=24,Watermark=LocalizationManager.Text("中文分類","Chinese category")};Track(kind);
+                void UpdateCategoryLabel(){categoryLabel.Text=LocalizationManager.Text("分類（AI 自動建立，也可自行修改）","Category (created by AI; editable)");kind.Watermark=LocalizationManager.Text("中文分類","Chinese category");Avalonia.Automation.AutomationProperties.SetName(kind,LocalizationManager.Text("記憶分類","Memory category"));}
+                _localizeDetails.Add(UpdateCategoryLabel);UpdateCategoryLabel();
+                var save=LocalButton("儲存修改",new Thickness(8,0));save.Click+=(_,_)=>Act(()=>_store.UpdateMemory(memory.Id,kind.Text?.Trim()??memory.Category,editor.Text??""));
+                var delete=LocalButton("刪除此記憶");delete.Click+=(_,_)=>Act(()=>_store.DeleteMemory(memory.Id));
                 actions.Children.Add(kind);actions.Children.Add(save);actions.Children.Add(delete);panel.Children.Add(actions);_memories.Children.Add(Card(panel));
             }
         }
@@ -92,10 +114,26 @@ public sealed class MemoryPalaceWindow : Window
             var date=new TextBox{Text=reminder.Due.LocalDateTime.ToString("yyyy/MM/dd HH:mm"),Watermark="yyyy/MM/dd HH:mm"};
             Track(text);Track(date);
             panel.Children.Add(Label("提醒事項"));panel.Children.Add(text);panel.Children.Add(Label("提醒時間（本機時區）"));panel.Children.Add(date);
-            var actions=new WrapPanel();var save=new Button{Content="修改並重新排程",Margin=new Thickness(0,0,8,0)};
+            var actions=new WrapPanel();var save=LocalButton("修改並重新排程",new Thickness(0,0,8,0));
             save.Click+=(_,_)=>Act(()=>{if(!DateTime.TryParseExact(date.Text,"yyyy/MM/dd HH:mm",CultureInfo.InvariantCulture,DateTimeStyles.None,out var local)||TimeZoneInfo.Local.IsInvalidTime(local)||TimeZoneInfo.Local.IsAmbiguousTime(local))throw new InvalidOperationException("時間格式請填 yyyy/MM/dd HH:mm。");_store.UpdateReminder(reminder.Id,text.Text??"",new DateTimeOffset(local,TimeZoneInfo.Local.GetUtcOffset(local)));});
-            var delete=new Button{Content="刪除此提醒"};delete.Click+=(_,_)=>Act(()=>_store.DeleteReminder(reminder.Id));actions.Children.Add(save);actions.Children.Add(delete);panel.Children.Add(actions);_reminders.Children.Add(Card(panel));
+            var delete=LocalButton("刪除此提醒");delete.Click+=(_,_)=>Act(()=>_store.DeleteReminder(reminder.Id));actions.Children.Add(save);actions.Children.Add(delete);panel.Children.Add(actions);_reminders.Children.Add(Card(panel));
         }
         ApplyLanguage();
+    }
+
+    private sealed class PalaceLayoutGrid(TabControl tabs,TextBlock heading,StackPanel intro,StackPanel memories,StackPanel reminders):Grid
+    {
+        protected override Size MeasureOverride(Size availableSize)
+        {
+            var width=double.IsFinite(availableSize.Width)?availableSize.Width:720;
+            tabs.Width=tabs.MaxWidth=Math.Max(1,width);
+            memories.MaxWidth=reminders.MaxWidth=Math.Max(1,width-28);
+            heading.Measure(new Size(width,double.PositiveInfinity));
+            intro.Measure(new Size(width,double.PositiveInfinity));
+            tabs.MaxHeight=double.IsFinite(availableSize.Height)
+                ?Math.Max(40,availableSize.Height-heading.DesiredSize.Height-intro.DesiredSize.Height)
+                :double.PositiveInfinity;
+            return base.MeasureOverride(availableSize);
+        }
     }
 }

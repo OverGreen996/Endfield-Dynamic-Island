@@ -35,12 +35,12 @@ public static class AllUiLayoutProbe
         var notice=new NotificationIslandWindow();var noticeBody=(Control)notice.Content!;
         foreach(double width in new[]{320d,560d})foreach(bool pinned in new[]{false,true})
         {
-            double height=136;
-            notice.Width=width;notice.Height=height;
+            double height=106;
+            notice.Width=width;notice.Height=height;notice.ApplyCompactLayout(width);
             notice.FindControl<TextBlock>("AppLabel")!.Text="較長的應用程式名稱";
             notice.FindControl<TextBlock>("TimeLabel")!.Text=pinned?"已固定 · 再點收起":"停留中 · 移開後收起";
             notice.FindControl<TextBlock>("TitleLabel")!.Text="較長的通知標題以省略號處理，不應超出邊框";
-            var label=notice.FindControl<TextBlock>("BodyLabel")!;label.Text=string.Concat(Enumerable.Repeat("通知正文測試，需要正常換行。",20));label.MaxLines=pinned?0:2;
+            var label=notice.FindControl<TextBlock>("BodyLabel")!;label.Text=string.Concat(Enumerable.Repeat("通知正文測試，需要正常換行。",20));label.MaxLines=pinned?0:1;
             noticeBody.Measure(new Size(width,height));noticeBody.Arrange(new Rect(0,0,width,height));
             foreach(var id in new[]{"AppLabel","TimeLabel","TitleLabel","BodyScroll"}){var c=notice.FindControl<Control>(id)!;var p=c.TranslatePoint(new Point(0,0),noticeBody)!.Value;Check(p.X>=8&&p.Y>=8&&p.X+c.Bounds.Width<=width-8+.1&&p.Y+c.Bounds.Height<=height-8+.1,$"notification {id} inside {width}x{height}, pinned={pinned}");}
         }
@@ -55,7 +55,7 @@ public static class AllUiLayoutProbe
             foreach(var id in new[]{"LanguageChineseBtn","LanguageEnglishBtn","OpenSettingsFolderBtn","SaveBtn"}){var c=settings.FindControl<Control>(id)!;var p=c.TranslatePoint(new Point(0,0),content)!.Value;Check(p.X>=0&&p.Y>=0&&p.X+c.Bounds.Width<=width+.1&&p.Y+c.Bounds.Height<=480+.1,$"settings header {id} in viewport {width}");}
         }
         settings.Close();hud.Close();
-        string qaRoot=Path.Combine(Path.GetTempPath(),"PalaceLayout-"+Guid.NewGuid().ToString("N"));var store=new PersonalAssistantStore(Path.Combine(qaRoot,"personal.dpapi"));store.Handle("記住我喜歡中文分類",DateTimeOffset.Now);
+        string qaRoot=Path.Combine(Path.GetTempPath(),"PalaceLayout-"+Guid.NewGuid().ToString("N"));var store=new PersonalAssistantStore(Path.Combine(qaRoot,"personal.dpapi"));PersonalTestData.Memory(store,"我喜歡中文分類","介面偏好");
         var palace=new MemoryPalaceWindow(store);
         foreach(double width in new[]{380d,760d})foreach(double height in new[]{320d,650d})
         {

@@ -49,7 +49,7 @@ public sealed class StartupPerformanceApplication:Application
                     var timer=Stopwatch.StartNew();var presentation=runtime.PreviewActiveAsync();
                     Check(hud.IsVisible&&!held.Task.IsCompleted,$"HUD {i} becomes visible before held hardware finishes");
                     await presentation;Console.WriteLine($"HUD summon {i}: {timer.ElapsedMilliseconds} ms");
-                    Check(timer.ElapsedMilliseconds<900,"HUD animation completes without waiting for hardware");
+                    Check(timer.ElapsedMilliseconds<3500,"original HUD intro completes on its own timeline without waiting for hardware");
                     timer.Restart();await runtime.BeginAssistantAsync();Console.WriteLine($"mode switch {i}: {timer.ElapsedMilliseconds} ms");
                     Check(timer.ElapsedMilliseconds<700&&!hud.IsVisible,"mode switch does not wait for sampling or 5-second busy loop");runtime.EndAssistant();runtime.Stop();
                 }

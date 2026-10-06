@@ -1,23 +1,40 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  x:Class="EndfieldChargePlus.Views.NotificationIslandWindow" Title="Windows 通知靈動島"
- Width="560" Height="136" SystemDecorations="None" Background="Transparent"
+ Width="576" Height="106" SystemDecorations="None" Background="Transparent"
  TransparencyLevelHint="Transparent" Topmost="True" ShowInTaskbar="False" ShowActivated="False" CanResize="False">
- <Border x:Name="Island" Margin="8" CornerRadius="60" Background="#312F30" BorderThickness="0" ClipToBounds="True">
+ <Window.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceInclude Source="avares://EndfieldChargePlus/Styles/HudTheme.axaml"/></ResourceDictionary.MergedDictionaries></ResourceDictionary></Window.Resources>
+ <LayoutTransformControl x:Name="NoticeScale" HorizontalAlignment="Center" VerticalAlignment="Center"><Grid x:Name="NoticeRoot" Width="576" Height="106">
+ <Border x:Name="Island" Width="560" Height="60" HorizontalAlignment="Center" VerticalAlignment="Center" CornerRadius="30" Background="#312F30" BorderThickness="0" ClipToBounds="True">
   <Grid>
-   <Border CornerRadius="60" BorderBrush="#444744" BorderThickness="0.5" IsHitTestVisible="False"/>
-   <Path x:Name="EdgeAccent" Width="60" Height="60" HorizontalAlignment="Right" VerticalAlignment="Bottom" Data="M 59.75,0 A 59.75,59.75 0 0 1 0,59.75 L 0,56.25 A 56.25,56.25 0 0 0 56.25,0 Z" Fill="#EAEF24" IsHitTestVisible="False"/>
-  <Grid ColumnDefinitions="Auto,*" Margin="24,12,28,12">
-   <Border Width="42" Height="42" CornerRadius="14" Background="#202320" VerticalAlignment="Center">
-    <PathIcon Width="21" Height="23" Foreground="#EAEF24" Data="M 12,2 C 7,2 4,6 4,12 L 4,18 L 1,21 L 23,21 L 20,18 L 20,12 C 20,6 17,2 12,2 Z M 9,24 C 9,28 15,28 15,24 Z"/>
-   </Border>
-   <StackPanel Grid.Column="1" Margin="14,0,12,0" Spacing="4" VerticalAlignment="Center">
-    <Grid ColumnDefinitions="*,Auto"><TextBlock x:Name="AppLabel" FontSize="11" Foreground="#CED350" TextTrimming="CharacterEllipsis"/><TextBlock x:Name="TimeLabel" Grid.Column="1" FontSize="11" Foreground="#A1AAA1" Margin="8,0,0,0" MaxWidth="128" TextTrimming="CharacterEllipsis"/></Grid>
-    <TextBlock x:Name="TitleLabel" FontSize="15" FontWeight="SemiBold" Foreground="#F0F1ED" TextTrimming="CharacterEllipsis" MaxLines="1"/>
-    <ScrollViewer x:Name="BodyScroll" Height="34" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
-     <TextBlock x:Name="BodyLabel" FontSize="12" Foreground="#ABB2AA" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2"/>
-    </ScrollViewer>
-   </StackPanel>
-  </Grid>
+   <Path x:Name="EdgeAccent" IsVisible="False"/>
+    <Grid x:Name="NoticeRippleHost" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"><Grid.RenderTransform><TranslateTransform X="0"/></Grid.RenderTransform>
+     <Grid x:Name="NoticeRippleInnerHost"><Grid.RenderTransform><TranslateTransform Y="16"/></Grid.RenderTransform><Ellipse x:Name="NoticeRippleInner" Width="160" Height="160" Fill="#656363" Opacity="0" RenderTransformOrigin="50%,50%"><Ellipse.RenderTransform><ScaleTransform ScaleX="0" ScaleY="0"/></Ellipse.RenderTransform></Ellipse></Grid>
+     <Grid x:Name="NoticeRippleMidHost"><Grid.RenderTransform><TranslateTransform Y="16"/></Grid.RenderTransform><Ellipse x:Name="NoticeRippleMid" Width="220" Height="220" Stroke="#656363" StrokeThickness="5" Opacity="0" RenderTransformOrigin="50%,50%"><Ellipse.RenderTransform><ScaleTransform ScaleX="0" ScaleY="0"/></Ellipse.RenderTransform></Ellipse></Grid>
+     <Grid x:Name="NoticeRippleOuterHost"><Grid.RenderTransform><TranslateTransform Y="16"/></Grid.RenderTransform><Ellipse x:Name="NoticeRippleOuter" Width="280" Height="280" Stroke="#656363" StrokeThickness="3.5" Opacity="0" RenderTransformOrigin="50%,50%"><Ellipse.RenderTransform><ScaleTransform ScaleX="0" ScaleY="0"/></Ellipse.RenderTransform></Ellipse></Grid>
+    </Grid>
+    <StackPanel x:Name="NoticeIntroTitle" Spacing="2" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False"><TextBlock Text="/// SYSTEM NOTICE" FontSize="9" LetterSpacing="2" Foreground="White" Opacity=".4" HorizontalAlignment="Center"/><TextBlock Text="NOTIFICATION" FontSize="26" FontWeight="Bold" LetterSpacing="2" Foreground="White" HorizontalAlignment="Center"/></StackPanel>
+    <Grid x:Name="NoticeMotionIcon" Width="32" Height="32" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False"><Grid.RenderTransform><TransformGroup><ScaleTransform ScaleX=".4" ScaleY=".4"/><TranslateTransform X="0"/></TransformGroup></Grid.RenderTransform>
+     <Grid x:Name="NoticeCircleForm"><Ellipse Width="32" Height="32" Fill="#E9E7E4"/><PathIcon Width="18" Height="18" Foreground="#141313" Data="M12 2 C7.6 2 5 5.5 5 10 V15 L3 18 H21 L19 15 V10 C19 5.5 16.4 2 12 2 Z M9 20 H15 C15 24 9 24 9 20 Z"/></Grid>
+     <Grid x:Name="NoticeSquareForm" Opacity="0"><Border Width="18" Height="18" CornerRadius="4.5" Background="#E9E7E4"/></Grid>
+    </Grid>
+   <Grid x:Name="NoticeContent" ColumnDefinitions="32,*,46" Margin="19,7,5,7">
+    <Border Width="18" Height="18" CornerRadius="4.5" Background="#E9E7E4" VerticalAlignment="Center" HorizontalAlignment="Center">
+     <Path Width="12" Height="12" Stretch="Uniform" Fill="#141313" Data="M12 2 C7.6 2 5 5.5 5 10 V15 L3 18 H21 L19 15 V10 C19 5.5 16.4 2 12 2 Z M9 20 H15 C15 24 9 24 9 20 Z"/>
+    </Border>
+    <Grid Grid.Column="1" Margin="14,0,18,0" RowDefinitions="11,21,14">
+     <Grid ColumnDefinitions="*,Auto"><TextBlock x:Name="AppLabel" FontFamily="{DynamicResource Hud.FontFamily}" FontSize="9" Foreground="#A29FA1" TextTrimming="CharacterEllipsis"/><TextBlock x:Name="TimeLabel" Grid.Column="1" FontFamily="{DynamicResource Hud.FontFamily}" FontSize="8" Foreground="#858283" Margin="8,0,0,0" MaxWidth="140" TextTrimming="CharacterEllipsis"/></Grid>
+     <TextBlock x:Name="TitleLabel" Grid.Row="1" FontFamily="{DynamicResource Hud.FontFamily}" FontSize="17" FontWeight="Medium" Foreground="White" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+     <ScrollViewer x:Name="BodyScroll" Grid.Row="2" Height="14" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
+      <TextBlock x:Name="BodyLabel" FontFamily="{DynamicResource Hud.FontFamily}" FontSize="11" Foreground="#A29FA1" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+     </ScrollViewer>
+    </Grid>
+    <Grid Grid.Column="2" Width="46" Height="46" VerticalAlignment="Center">
+     <Ellipse Width="46" Height="46" Fill="#262425"/>
+     <Path x:Name="CountdownArc" Width="46" Height="46" Stretch="None" Stroke="#C6CA4C" StrokeThickness="4.5" StrokeLineCap="Round" IsHitTestVisible="False"/>
+     <Path x:Name="NoticeBadge" Width="21" Height="21" Stretch="Uniform" Stroke="#C6CA4C" StrokeThickness="1.5" StrokeLineCap="Round" StrokeJoin="Round" Data="M12 2 C7.6 2 5 5.5 5 10 V15 L3 18 H21 L19 15 V10 C19 5.5 16.4 2 12 2 Z M9 21 C9 24 15 24 15 21"/>
+    </Grid>
+   </Grid>
   </Grid>
  </Border>
+ </Grid></LayoutTransformControl>
 </Window>
