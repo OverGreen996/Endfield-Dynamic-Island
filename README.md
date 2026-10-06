@@ -1,67 +1,115 @@
-<p align="center"><img src="docs/assets/hero.png" alt="終末地 靈動島 · 石墨灰、青藍與黃色的 Windows 桌面工具" width="100%"></p>
+<p align="center"><img src="docs/assets/readme-hero-zh.svg" alt="終末地 靈動島：原生 AI、音樂、通知與效能資訊，終末地工業風桌面工具" width="100%"></p>
 
 <h1 align="center">終末地 靈動島</h1>
-<p align="center">ENDFIELD DYNAMIC ISLAND<br>把對話、音樂、通知與效能資訊，收進桌面上的一座島。</p>
+<p align="center">一座島，掌握桌面。<br>AI 對話、個人記憶、音樂、通知與 CPU／GPU／RAM／VRAM。</p>
+
 <p align="center">
-  <a href="https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest">下載 Windows 安裝版</a> ·
-  <a href="docs/INSTALL.zh-TW.md">安裝教學</a> ·
-  <a href="README.en.md">English</a>
+  <a href="https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest"><img src="https://img.shields.io/badge/下載_Windows_安裝版-v0.28.14-E6E744?style=for-the-badge&amp;labelColor=202729" alt="下載 v0.28.14 Windows 安裝版"></a>
 </p>
 <p align="center">
-  <img alt="Windows 10 / 11" src="https://img.shields.io/badge/Windows-10%20%2F%2011-13C8EB?style=flat-square">
-  <img alt=".NET 8" src="https://img.shields.io/badge/.NET-8-323736?style=flat-square">
-  <img alt="source v0.28.14" src="https://img.shields.io/badge/source-v0.28.14-E6E744?style=flat-square">
-  <img alt="MIT" src="https://img.shields.io/badge/license-MIT-323736?style=flat-square">
+  <a href="docs/INSTALL.zh-TW.md">安裝教學</a> · <a href="docs/USAGE.zh-TW.md">操作說明</a> · <a href="docs/AI-FALLBACK.md">AI 金鑰與備援</a> · <a href="README.en.md">English</a>
+</p>
+<p align="center">
+  <a href="https://github.com/OverGreen996/Endfield-Dynamic-Island/actions/workflows/build.yml"><img src="https://github.com/OverGreen996/Endfield-Dynamic-Island/actions/workflows/build.yml/badge.svg" alt="Windows 建置與隔離測試狀態"></a>
+  <img src="https://img.shields.io/badge/Windows-10%20%2F%2011-13C8EB?style=flat-square&amp;labelColor=202729" alt="Windows 10 或 11">
+  <img src="https://img.shields.io/badge/.NET-8-323736?style=flat-square" alt=".NET 8，安裝包內建執行環境">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-323736?style=flat-square" alt="MIT 授權"></a>
 </p>
 
-以終末地的工業介面為靈感，搭配石墨灰面板、青藍資訊與黃色操作重點。視窗切換使用銜接動畫；一次呈現一種內容，通知結束後回到原來的頁面。
+---
 
-設定視窗採用：深色索引導覽、銀灰面板、章節字階，以及融入程式的標題列。中英介面與視窗操作都保留。[設計與驗證](docs/SETTINGS-DESIGN.md)。
+## 這次是整體重製
 
-![設定視窗新版介面](docs/assets/settings-v026.png)
+**v0.28.14 已發布。** AI 與搜尋直接內建於主程式，從理解問題、個人記憶，到搜尋與答覆，走同一條流程。設定視窗、模型備援、人格切換與膠囊 HUD 都已整合，安裝後填入自己的金鑰即可開始使用。
 
-v0.25.0 將 HUD 顯示與採樣分離。硬體方案收起時約每 5 秒背景預採樣，顯示時約每秒更新；喚出直接讀快取，AI／音樂／通知不等待硬體暖機。採樣與設定預覽共用同一份服務，完整電源演出保留。[採樣架構與限制](docs/ARCHITECTURE.md#v0250-顯示與採樣分離)。
-
-## 一眼看懂，一鍵喚出
-
-| 模組 | 使用方式 |
+| 以前 | 現在 |
 | --- | --- |
-| **AI 助理** | `Alt+A` 直接開始輸入。你的訊息在右側，AI 在左側；自然問答、快速逐字回覆、上下文、右鍵新對話與頂部收合動畫。 |
-| **音樂島** | `Alt+M` 喚出。封面、時間、進度、上一首／下一首、隨機與重播整合在橫向膠囊中。 |
-| **Windows 通知** | 新通知優先顯示，結束後返回原頁。支援滑鼠停留、點擊固定、隱藏內容與逾時收起。 |
-| **效能 HUD** | 同一列看 CPU、GPU、RAM、VRAM，包含百分比與容量。沒有讀到的數據顯示 `—`，不產生假讀值。 |
-| **提醒與記憶** | 「明天九點提醒我開會」建立本機提醒。記憶依身分、偏好、個人事項與不希望 AI 做的事情分類，可逐筆刪除。 |
-| **桌面控制中心** | 繁體中文／English、顯示器與位置、縮放、動畫、頭像、通知權限與設定管理。 |
+| 需要另外啟動 AI／搜尋服務 | 主程式直接呼叫 API，不需 Node、Docker 或本機 HTTP 服務 |
+| 記憶依賴口令與固定分類 | AI 理解內容、評估是否值得記住，建立中文分類；本機驗證原文並去重 |
+| 只貼圖就抄出 OCR 文字 | 本機 OCR 讀字，再由 AI 承接前文回應，必要時搜尋 |
+| 一家模型或搜尋 API 受限就卡住 | 多組 Gemini 與模型備援、三家搜尋服務自動接手 |
+| 效能總覽副本可能只剩空殼 | 副本保留 CPU、GPU、RAM、VRAM 與採樣設定 |
 
-## 先下載，後設定
+> 只貼圖回應已用實際圖片測試；三家模型介接與原文驗證也有回歸檢查。模型的推理、語氣與等待時間仍可能不同。[閱讀驗證紀錄 →](docs/VALIDATION.md)
 
-1. 到 [Releases](https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest) 下載 `Endfield-Dynamic-Island-Setup-v<版本>-win-x64.exe`。
-2. 從系統匣退出舊版，執行安裝程式。預設安裝到目前使用者，不需要管理員權限。
-3. 從桌面或開始功能表開啟「終末地 靈動島」。可在 Windows「已安裝的應用程式」解除安裝。
-4. 在設定選擇顯示位置；音樂貼上自己的 YouTube 清單，通知按「要求通知讀取權限」。
+## 同一座島，四種日常
 
-安裝版附帶 .NET 執行環境與播放器；升級及解除安裝保留使用者資料，不再配送便攜版。HUD、提醒、記憶管理與通知介面可獨立使用。YouTube 清單播放需要 Microsoft Edge WebView2 Runtime；跟隨瀏覽器模式使用 Windows 媒體介面，隨機／重播是否可用取決於瀏覽器的能力。
+石墨灰膠囊、青藍資訊與黃色操作重點，延續終末地的工業視覺。一次顯示一種內容；通知優先，結束後返回原頁，切換以動畫銜接。
 
-發佈頁提供的版本以該頁實際附件為準；原始碼版本不代表已發佈到 GitHub。
+| 模組 | 你可以做什麼 |
+| --- | --- |
+| **AI 助理** · `Alt+A` | 自然問答、背景搜尋、快速逐字顯示；切換人格、接續上下文、Ctrl+V 貼圖。AI 頭像維持青藍圈，使用者頭像可自訂並帶黃色圈。 |
+| **音樂** · `Alt+M` | YouTube 清單或跟隨瀏覽器，封面、進度、上一首／下一首、隨機與重播。 |
+| **通知與提醒** | 通知優先顯示、停留暫停、點擊固定；AI 建立的本機提醒到點顯示，不額外呼叫模型。 |
+| **效能 HUD** | 一列讀完 CPU、GPU、RAM、VRAM，背景預採樣減少喚出等待；缺值顯示 `—`。效能總覽右側圓環顯示 GPU 使用率。 |
 
-目前原始碼版本 v0.28.14，AI 與搜尋直接收進主程式：不需 Node、本機 HTTP 服務或 PowerShell 設定工具。安裝後直接設定金鑰即可使用；Daily 的金鑰、資料與額度完全獨立。既有對話、記憶、提醒與用量紀錄保留。
+<p align="center">
+  <img src="docs/assets/performance-current.png" alt="效能總覽實際介面，CPU、GPU、RAM、VRAM 及 GPU 圓環" width="700"><br><br>
+  <img src="docs/assets/music-current.png" alt="音樂膠囊實際介面，曲名、進度、播放及隨機重播控制" width="700"><br><br>
+  <img src="docs/assets/notification-current.png" alt="通知膠囊實際介面，通知標題、內容與倒數圓環" width="700">
+</p>
+<p align="center"><sub>由實際程式介面擷取；數值、曲目與通知為示範資料。</sub></p>
 
-對話區塊重寫為自然問答，快速逐字顯示，不展示來源或查證報告。一般文字助理採 Gemini → Groq GPT-OSS 120B → Cloudflare Qwen3.8-27B，移除本機次數與累計 token 限額，依官方回應與恢復時間輪替。設定 → AI 助理填入備援憑證；圖片文字改用 Windows 本機 OCR；單純擷取文字不需模型金鑰。[備援設定教學](docs/AI-FALLBACK.md)。
+## 理解你，再回答你
 
-搜尋設定新增可選「每輪搜尋換一家」，成功後依自訂順序循環分散請求；快取、取消與純聊天不推進，故障及封鎖自動跳過。預設保留優先順序，詳見 [操作說明](docs/USAGE.zh-TW.md)。
+你可以直接說「我養了一條黑王蛇」、「不要每次回答都叫我的名字」或「明早九點叫我拿包裹」。AI 同時判斷聊天、搜尋、記憶與提醒，不要求固定口令，也可以在一輪內完成搜尋＋記憶。
 
-## 本機優先
+**記憶宮殿**由 AI 產生可讀的中文分類，保存穩定的個人資訊、偏好與不希望助理做的事情。玩笑、假設、第三人資料與圖片文字不自行變成你的記憶；你可在宮殿中逐筆檢查、刪除。
 
-- 搜尋使用 Exa Auto → Tavily Basic → Firecrawl Search。右鍵 → 搜尋 API 與輪替，在程式內設定金鑰及順序。Exa、Tavily 無本機額度限制，API 搜尋失敗後停用至下個月 2 號台灣時間 00:05，再於下一次搜尋重試；期間自動切換備援。Firecrawl 無本機點數上限，以官方 API 核對餘額，帳單切換日與時間可手動設定。
-- 自動模式先由 Gemini 理解一次問題；一般聊天以專門答覆步驟回答，需要查證才搜尋，再依資料整理。只搜尋模式不呼叫 Gemini。
-- 同一輪模型回應判斷個人記憶，不另扣分類次數；玩笑、第三人資料、敏感資訊與推測不自動記憶。
-- 金鑰、對話、提醒與記憶使用 Windows DPAPI；通知不會送給模型。模型用量採原有本機帳本，升級不重設額度。
-- 提醒最多 300 筆，滿額移除最舊項目；程式必須運行才能提醒，不會喚醒睡眠或關機的電腦。
-[隱私與資料位置](docs/PRIVACY.md) · [操作教學](docs/USAGE.zh-TW.md) · [設計規範](docs/DESIGN.md) · [變更紀錄](CHANGELOG.md)
+**AI 人格**分成「角色人格」與「互動規則」，可儲存、複製、刪除與切換。內附可編輯的莊方宜範例；切換從下一則訊息生效，聊天與個人記憶保留。人格影響措辭與態度，平常不必反覆提及設定。
 
-## 從原始碼建置
+<p align="center"><img src="docs/assets/personas-current.png" alt="AI 人格管理實際畫面：人格列表、角色人格、互動規則與保存切換操作" width="900"></p>
+<p align="center"><sub>人格視窗與內建範例，非使用者私人資料。</sub></p>
 
-需要 Windows 10 / 11、.NET 8 SDK 與 Inno Setup 7.1 或更新版本。公開原始碼以相對路徑建置，無須原開發電腦的目錄。
+**貼圖也能接著聊。** Ctrl+V 預覽後送出，Windows 本機 OCR 擷取文字；自動模式即使只貼圖，也會把辨識文字與前文交給 AI，判斷答覆、搜尋或必要釐清。圖片本身不上傳。未設定 AI，或只搜尋模式無附加文字時，保留本機文字擷取；OCR 不負責辨識人物、物品或照片場景。
+
+[完整操作與記憶規則 →](docs/USAGE.zh-TW.md)
+
+## 模型與搜尋，各自備援
+
+| 對話模型 | 搜尋服務 |
+| --- | --- |
+| **Gemini 1 → 2 → 3 → 4 → 5** | **Exa Auto → Tavily Basic → Firecrawl Search** |
+| 全部不可用後：Groq GPT-OSS 120B → Cloudflare Qwen3.8-27B | 可自訂順序，或開啟「每輪搜尋換一家」 |
+| 持續使用最優先可用帳號，受限才換下一組 | 故障／停用時，同一輪由下一家接手 |
+| 各組延續同一份上下文與人格 | 純聊天、快取、取消不推進輪替 |
+
+沒有本機每日次數或累計 token 限額；模型依官方錯誤與恢復時間切換。Gemini 配額按專案計算，五組金鑰不代表無限或保證五倍免費額度；多帳號使用仍須符合 [Google API 條款](https://developers.google.com/terms/)。
+
+搜尋的恢復策略獨立設定：Exa／Tavily 搜尋失敗後停用至下個月 2 日台灣時間 00:05，到期在下一次搜尋重試；Firecrawl 依官方 API 餘額與手動設定的帳單切換日恢復。這是程式的重試規則，實際額度由供應商決定。[設定教學 →](docs/AI-FALLBACK.md)
+
+## 三步開始使用
+
+1. **下載安裝。** 在 [最新版發布頁](https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest) 下載 Windows x64 Setup。更新前從系統匣退出舊版，再執行安裝程式。
+2. **設定桌面。** 從桌面或開始功能表開啟「終末地 靈動島」，設定顯示器、位置與縮放；通知需取得 Windows 讀取權限，音樂可貼上自己的清單。
+3. **接上助理。** 設定 → AI 助理填入自己的 API 金鑰；搜尋 API 與輪替中填入搜尋金鑰。人格與記憶可隨時管理。
+
+<p align="center"><img src="docs/assets/settings-current.png" alt="目前設定視窗：融入程式的標題列、中文側欄與 AI 設定" width="100%"></p>
+<p align="center"><sub>目前設定介面；帳號狀態與用量依你的金鑰和使用情況而異。</sub></p>
+
+| 環境 | 需求 |
+| --- | --- |
+| 作業系統 | Windows 10 2004 或更新版本／Windows 11，x64 |
+| 執行環境 | 安裝程式已包含 .NET 與獨立音樂程序，無須另外安裝 .NET |
+| YouTube 清單 | Microsoft Edge WebView2 Runtime；跟隨瀏覽器使用 Windows 媒體工作階段 |
+| AI／搜尋 | 自備供應商 API 金鑰，額度及可用性依帳號方案 |
+| 圖片文字 | Windows 已安裝的 OCR 語言；繁體中文優先 |
+
+目前提供安裝版。升級及解除安裝保留使用者資料；在 Windows「已安裝的應用程式」可移除程式。通知、HUD、音樂與本機提醒不依賴 AI 額度；提醒須程式運行，不會喚醒睡眠或關機的電腦。
+
+## 資料留在該留的地方
+
+- 金鑰、聊天、人格、個人記憶與提醒以 Windows DPAPI 加密，保存於目前使用者的電腦；原始碼與發布包不包含私人資料。
+- 使用模型時，問題、必要上下文、相關記憶與已啟用人格會送給當次供應商；需要搜尋時，查詢送給搜尋 API。
+- 通知不送給模型。圖片由本機 OCR 讀字，辨識文字可供 AI 理解與搜尋，原始圖片不上傳。
+- 記憶與提醒仍須通過本機原文驗證；模型誤判可在記憶宮殿刪除。提醒最多 300 筆，滿額依序移除最舊項目。
+
+[隱私與資料位置 →](docs/PRIVACY.md)
+
+<details>
+<summary><strong>開發、建置與驗證</strong></summary>
+
+在 Windows 安裝 .NET 8 SDK，以及 Inno Setup 7.1 或更新版本。從公開原始碼以相對路徑建置：
 
 ```powershell
 git clone https://github.com/OverGreen996/Endfield-Dynamic-Island.git
@@ -71,18 +119,18 @@ dotnet build src/EndfieldIsland/EndfieldChargePlus.csproj -c Release
 ./scripts/Publish.ps1
 ```
 
-安裝程式與 SHA256 輸出到 `artifacts/installer`；`artifacts/staging` 僅為建置暫存。`scripts/Start.ps1` 啟動預設安裝位置的程式。測試使用合成資料，不呼叫 Gemini。實體多螢幕、不同 Windows DPI、不同 YouTube 清單與通知來源仍需在各自環境驗證。
+安裝包與 SHA256 輸出至 `artifacts/installer`，`artifacts/staging` 為打包暫存。一般回歸使用合成資料，不呼叫模型；名稱含 `live` 的人工測試需另外選擇，會使用真實 API。
+
+本機與 GitHub CI 的檢查範圍、實際模型品質及已知限制記在 [驗證紀錄](docs/VALIDATION.md)，不以合成回歸通過取代實際語氣品質。多螢幕、DPI、GPU 驅動與瀏覽器播放仍依環境而異。
+
+[架構](docs/ARCHITECTURE.md) · [設計規範](docs/DESIGN.md) · [變更紀錄](CHANGELOG.md)
+
+</details>
 
 ## 來源與授權
 
-本專案延續 [GlacierGlimmer/zmd-charge-plus](https://github.com/GlacierGlimmer/zmd-charge-plus) 與 [QinAnze/zmd-charge](https://github.com/QinAnze/zmd-charge)，保留原作者 MIT 授權與署名。
+延續 [GlacierGlimmer/zmd-charge-plus](https://github.com/GlacierGlimmer/zmd-charge-plus) 與 [QinAnze/zmd-charge](https://github.com/QinAnze/zmd-charge)，保留原作者 MIT 授權與署名。圖標來自 [Yue-plus/endfield_icons](https://github.com/Yue-plus/endfield_icons)；播放器包含 YouTube NonStop 的 MIT 元件。[第三方授權 →](NOTICE.md)
 
-介面向量圖標來自 [Yue-plus/endfield_icons](https://github.com/Yue-plus/endfield_icons)，播放器附帶 YouTube NonStop 的 MIT 授權元件。第三方元件詳見 [NOTICE.md](NOTICE.md)；相關原始碼、授權與來源隨包保留。
+非官方社群衍生工具，與《明日方舟：終末地》開發方或發行方無隸屬或背書關係。
 
-這是非官方社群衍生工具，與《明日方舟：終末地》開發方或發行方無隸屬或背書關係。頁首為品牌示意圖，數字用於版面示範。
-
-### 人格與五組 Gemini 主力
-
-設定 → AI 助理 → **管理 AI 人格**：分開填寫角色人格與互動規則，儲存後按「使用此人格」。可新增、複製或刪除，內附可編輯的莊方宜助理範例。切換從下一則訊息生效，原本聊天與記憶保留。
-
-**設定 Gemini 五組主力輪換**：第 1 組沿用上方主金鑰，另填 2–5 組。程式持續使用第 1 組，受限才換 2、3、4、5，全部不可用才接 Groq → Cloudflare；恢復後回到較優先組。對話上下文與人格不因帳號接手而中斷。Google 配額按專案計算，多帳號使用仍須符合 [API 條款](https://developers.google.com/terms/)，不是無限免費額度。
+<p align="center"><a href="https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest"><strong>下載最新版</strong></a> · <a href="https://github.com/OverGreen996/Endfield-Dynamic-Island/issues">回報問題</a></p>
