@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Avalonia;
 using EndfieldChargePlus.Assistant;
+if(args.Contains("--hud-pin")){Environment.ExitCode=AppBuilder.Configure<HudPinApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);return;}
 if(args.Contains("--ocr-image-live")){await OcrIntentLiveProbe.ImageOnlyAsync(args.First(a=>a.StartsWith("--image=")).Split('=',2)[1]);return;}
 if(args.Contains("--cf-fast-reply")){await CloudflareFastReplyProbe.RunAsync();return;}
 if(args.Contains("--groq-responsibilities-live")||args.Contains("--responsibilities-live")){await ProviderResponsibilitiesLiveProbe.RunAsync(args.FirstOrDefault(a=>a.StartsWith("--provider="))?.Split('=',2)[1]??"groq",args.FirstOrDefault(a=>a.StartsWith("--case="))?.Split('=',2)[1],args.FirstOrDefault(a=>a.StartsWith("--cf-effort="))?.Split('=',2)[1],args.Contains("--one-call"));return;}

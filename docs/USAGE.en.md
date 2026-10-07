@@ -1,5 +1,7 @@
 # Usage
 
+Click the visible performance capsule to pin it temporarily, including during its intro animation. Readings continue updating and automatic dismissal pauses. Click again to hide. Temporary pinning does not change the saved always-visible setting.
+
 Gemini, Groq and Cloudflare share direct, conversational reply guidance. Ordinary reply writers receive the understood draft as data; a stock closing invitation or unwanted question may trigger one rewrite. Clarifications, grounded memories and reminders remain separate. Voice quality still varies by model.
 
 | Action | Result |

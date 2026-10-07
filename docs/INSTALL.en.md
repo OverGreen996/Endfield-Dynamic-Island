@@ -1,6 +1,6 @@
 # Installation
 
-1. Exit the previous Island app from its tray menu. Run the Windows Setup executable for your chosen version. Current source: v0.28.14; GitHub downloads depend on the actual release attachments.
+1. Exit the previous Island app from its tray menu. Run the Windows Setup executable for your chosen version. Current source: v0.28.15; GitHub downloads depend on the actual release attachments.
 2. Setup installs for the current Windows user and includes .NET and the music host. Administrator rights and a separate AI service are unnecessary.
 3. Open Settings → AI assistant, paste your Gemini key and confirm your project's free-tier status. Saving takes effect immediately. Local quota checks do not call the model.
 4. Open the assistant context menu → Search APIs and rotation. Enter your own Exa, Tavily and Firecrawl keys and order; configure Firecrawl’s monthly renewal day and time in Taiwan time.

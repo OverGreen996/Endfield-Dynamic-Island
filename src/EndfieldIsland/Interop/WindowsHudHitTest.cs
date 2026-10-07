@@ -182,7 +182,11 @@ internal sealed class WindowsHudHitTest : IDisposable
             return new IntPtr(_nativeControls && !_transitionInputTransparent ? 1 : MaNoActivate);
         if (msg == WmLButtonUp && !_nativeControls)
         {
-            if (GetCursorPos(out NativePoint p))
+            // Use the release event's position. The cursor may already have moved
+            // by the time this message is processed (or be on another desktop).
+            var clientPoint = ScreenPointFromLParam(lParam);
+            var p = new NativePoint { X = clientPoint.X, Y = clientPoint.Y };
+            if (ClientToScreen(hwnd, ref p))
             {
                 var point = new PixelPoint(p.X, p.Y);
                 if (_isInteractivePoint(point))
@@ -276,7 +280,7 @@ internal sealed class WindowsHudHitTest : IDisposable
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool GetCursorPos(out NativePoint lpPoint);
+    private static extern bool ClientToScreen(IntPtr hwnd, ref NativePoint lpPoint);
 
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]

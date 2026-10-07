@@ -1,5 +1,11 @@
 # 變更紀錄 / Changelog
 
+## v0.28.15
+
+- 修正效能 HUD 點擊固定：動畫期間即可固定當前方案，結束動畫不覆寫固定狀態。固定後持續更新數據，再點一次收起；不改動永久常駐設定。
+- 原生滑鼠處理採用點擊事件座標，避免滑鼠移動後誤判位置。未固定的預覽仍按時收合，透明邊界仍可穿透。
+- Performance HUD can be pinned during its intro or after it, preserving the selected profile and live sampling. Click again to hide. Native clicks use event coordinates; automatic dismissal and transparent margins are retained.
+
 ## v0.28.14
 
 - 修正只貼圖直接回傳 OCR 字句：已設定 AI 時，辨識文字接上前文、人格與既有文字助理，判斷回應、搜尋或必要釐清，不需另外打搜尋口令。圖片仍留在本機，記憶／提醒只核對使用者原始文字。

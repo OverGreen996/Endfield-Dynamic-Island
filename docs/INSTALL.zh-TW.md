@@ -1,6 +1,6 @@
 # 安裝與使用
 
-1. 使用 `Endfield-Dynamic-Island-Setup-v0.28.14-win-x64.exe`，先從系統匣退出舊版。
+1. 使用 `Endfield-Dynamic-Island-Setup-v0.28.15-win-x64.exe`，先從系統匣退出舊版。GitHub 下載以實際發布附件為準。
 2. 安裝至目前 Windows 使用者；不需管理員權限，不另裝 Node、Docker 或資料庫。
 3. 到設定 → AI 助理貼上自己的 Gemini Key，確認免費方案後儲存。設定立即生效，儲存與查詢本機用量不呼叫模型。
 4. AI 右鍵 → 搜尋 API 與輪替，貼上 Exa、Tavily、Firecrawl 金鑰，設定順序；Firecrawl 可設定每月帳單切換日與時間（台灣時間）。

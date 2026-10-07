@@ -39,6 +39,7 @@ public sealed class CustomHudRuntime : IDisposable
     private DateTime _previewHideAt = DateTime.MinValue;
     private HudProfile? _previewProfile;
     private bool _userPinned;
+    private HudProfile? _pinnedProfile;
     private bool _assistantActive;
     public AppSettings EffectiveSettings => _appSettings;
 
@@ -94,6 +95,7 @@ public sealed class CustomHudRuntime : IDisposable
         _previewProfile = null;
         _previewHideAt = DateTime.MinValue;
         _userPinned = false;
+        _pinnedProfile = null;
 
         if (!_appSettings.AlwaysVisible || !_appSettings.HudEnabled)
             _persistentShown = false;
@@ -144,11 +146,8 @@ public sealed class CustomHudRuntime : IDisposable
             }
             else
             {
-                await _hud.ShowPreviewAsync(data, allowPin: true);
-                if(_assistantActive||_disposed)return;
-                _previewShown = true;
-                _previewProfile = profile;
-                _previewHideAt = DateTime.UtcNow.AddSeconds(Math.Clamp(_appSettings.DisplayDurationSeconds, 3d, 10d));
+                await ShowPinnablePreviewAsync(profile, data);
+                if(_assistantActive||_disposed||_userPinned)return;
             }
         }
         finally
@@ -248,11 +247,8 @@ public sealed class CustomHudRuntime : IDisposable
             }
             else
             {
-                await _hud.ShowPreviewAsync(data, allowPin: true);
-                if(_assistantActive||_disposed)return;
-                _previewShown = true;
-                _previewProfile = profile;
-                _previewHideAt = DateTime.UtcNow.AddSeconds(Math.Clamp(_appSettings.DisplayDurationSeconds, 3d, 10d));
+                await ShowPinnablePreviewAsync(profile, data);
+                if(_assistantActive||_disposed||_userPinned)return;
                 _persistentShown = false;
                 _persistentProfileId = string.Empty;
             }
@@ -290,6 +286,7 @@ public sealed class CustomHudRuntime : IDisposable
         if (_userPinned)
         {
             _userPinned = false;
+            _pinnedProfile = null;
             _persistentShown = false;
             _persistentProfileId = "";
             _previewShown = false;
@@ -304,6 +301,7 @@ public sealed class CustomHudRuntime : IDisposable
 
         var profile = _previewProfile ?? ResolveActiveProfile();
         _userPinned = true;
+        _pinnedProfile = profile;
         _previewShown = false;
         _previewProfile = null;
         _persistentShown = true;
@@ -451,6 +449,18 @@ public sealed class CustomHudRuntime : IDisposable
         _pendingPowerEvent = true;
     }
 
+    private async Task ShowPinnablePreviewAsync(HudProfile profile, HudRenderData data)
+    {
+        // A click during the intro pins this exact profile. Do not overwrite the
+        // pinned state when the presentation task completes or is cancelled.
+        _previewProfile = profile;
+        _previewShown = true;
+        _previewHideAt = DateTime.MaxValue;
+        await _hud.ShowPreviewAsync(data, allowPin: true);
+        if (_assistantActive || _disposed || _userPinned || !_hud.IsVisible) return;
+        _previewHideAt = DateTime.UtcNow.AddSeconds(Math.Clamp(_appSettings.DisplayDurationSeconds, 3d, 10d));
+    }
+
     private async Task<bool> TriggerTransientProfileAsync(HudProfile profile, bool allowPin = true)
     {
         if (_assistantActive) return false;
@@ -468,11 +478,8 @@ public sealed class CustomHudRuntime : IDisposable
                 return true;
             }
 
-            await _hud.ShowPreviewAsync(data, allowPin: true);
-                if(_assistantActive||_disposed)return false;
-            _previewShown = true;
-            _previewProfile = profile;
-            _previewHideAt = DateTime.UtcNow.AddSeconds(Math.Clamp(_appSettings.DisplayDurationSeconds, 3d, 10d));
+            await ShowPinnablePreviewAsync(profile, data);
+            if(_assistantActive||_disposed)return false;
             return true;
         }
         catch
@@ -487,7 +494,9 @@ public sealed class CustomHudRuntime : IDisposable
 
     private async Task TickPersistentAsync()
     {
-        var profiles = _settings.AutoCycle
+        var profiles = _userPinned && !_settings.AutoCycle && _pinnedProfile is {} pinned
+            ? new List<HudProfile> { pinned }
+            : _settings.AutoCycle
             ? ResolveCycleProfiles().ToList()
             : _settings.Profiles.ToList();
 

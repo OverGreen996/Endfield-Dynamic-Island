@@ -106,7 +106,7 @@ public partial class HudWindow : Window
 
         _persistent = false;
         _sessionPinned = false;
-        _bodyToggleEnabled = false;
+        _bodyToggleEnabled = allowPin;
         ApplyWindowLayer(false);
 
         _cts?.Cancel();
@@ -152,6 +152,7 @@ public partial class HudWindow : Window
 
         _persistent = true;
         _sessionPinned = true;
+        _cts?.Cancel();
         _bodyToggleEnabled = !_settings.AlwaysVisible;
         ApplyWindowLayer(true);
         SetPersistentFinalState();
