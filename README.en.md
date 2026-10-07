@@ -4,7 +4,7 @@
 <p align="center">One island. Your desktop in view.<br>AI conversations, personal memory, music, notifications and CPU / GPU / RAM / VRAM.</p>
 
 <p align="center">
-  <a href="https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest"><img src="https://img.shields.io/badge/Download_Windows_Setup-v0.28.14-E6E744?style=for-the-badge&amp;labelColor=202729" alt="Download v0.28.14 Windows installer"></a>
+  <a href="https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest"><img src="https://img.shields.io/badge/Download_Windows_Setup-v0.28.15-E6E744?style=for-the-badge&amp;labelColor=202729" alt="Download v0.28.15 Windows installer"></a>
 </p>
 <p align="center">
   <a href="docs/INSTALL.en.md">Installation</a> · <a href="docs/USAGE.en.md">Usage</a> · <a href="docs/AI-FALLBACK.md">AI keys and fallback</a> · <a href="README.md">繁體中文</a>
@@ -20,7 +20,7 @@
 
 ## A substantial rebuild
 
-**v0.28.14 is available.** AI and search now run directly inside the desktop app. Understanding, personal memory, research and replies share one conversation flow. The integrated settings window, model fallback, saved personas and capsule HUD are ready to use with your own API keys.
+**v0.28.15 is available.** AI and search now run directly inside the desktop app. Understanding, personal memory, research and replies share one conversation flow. The integrated settings window, model fallback, saved personas and capsule HUD are ready to use with your own API keys.
 
 | Before | Now |
 | --- | --- |
@@ -41,7 +41,7 @@ Graphite capsules, cyan information and restrained yellow controls carry Endfiel
 | **AI assistant** · `Alt+A` | Conversational replies, background research, progressive text display, saved personas, persistent context and Ctrl+V image paste. The AI avatar keeps its cyan ring; your custom avatar uses a yellow ring. |
 | **Music** · `Alt+M` | Use a YouTube playlist or follow your browser, with artwork, progress, previous/next, shuffle and repeat. |
 | **Notifications and reminders** | Priority previews, hover to hold and click to pin. AI-created reminders are delivered locally without another model request. |
-| **Performance HUD** | Read CPU, GPU, RAM and VRAM in one row. Background sampling reduces summon delays; unavailable readings show `—`. The overview's right-hand ring shows GPU utilization. |
+| **Performance HUD** | Read CPU, GPU, RAM and VRAM in one row. Background sampling reduces summon delays; unavailable readings show `—`. The overview's right-hand ring shows GPU utilization. Click to pin, including during the intro; click again to hide. |
 
 <p align="center">
   <img src="docs/assets/performance-current.png" alt="Actual performance overview with CPU, GPU, RAM, VRAM and the GPU ring" width="700"><br><br>

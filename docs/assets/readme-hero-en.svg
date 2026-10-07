@@ -13,7 +13,7 @@
 <path d="M84 260H125" stroke="#e6e744" stroke-width="4"/><path d="M137 260H294" stroke="#13c8eb" stroke-width="2"/>
 <text x="84" y="307" fill="#8de1ed" font-size="14" letter-spacing="2">ASSISTANT</text><text x="246" y="307" fill="#81999e" font-size="15">/</text><text x="273" y="307" fill="#d0dedf" font-size="14" letter-spacing="2">MUSIC</text><text x="377" y="307" fill="#81999e" font-size="15">/</text><text x="405" y="307" fill="#d0dedf" font-size="14" letter-spacing="2">NOTIFICATIONS</text><text x="600" y="307" fill="#81999e" font-size="15">/</text><text x="628" y="307" fill="#d0dedf" font-size="14" letter-spacing="2">TELEMETRY</text>
 <path d="M84 362H805" stroke="#3b4d52"/><text x="84" y="405" fill="#bccbce" font-size="13" letter-spacing="2">WINDOWS 10 / 11</text><text x="290" y="405" fill="#bccbce" font-size="13" letter-spacing="2">NATIVE AI</text><text x="443" y="405" fill="#bccbce" font-size="13" letter-spacing="2">MIT</text>
-<rect x="650" y="385" width="151" height="32" fill="#e6e744"/><text x="676" y="407" fill="#172126" font-size="14" font-weight="700" letter-spacing="1">v0.28.14</text>
+<rect x="650" y="385" width="151" height="32" fill="#e6e744"/><text x="676" y="407" fill="#172126" font-size="14" font-weight="700" letter-spacing="1">v0.28.15</text>
 </g><g transform="translate(1005 90) scale(0.60)" fill="#dce6e5">
 
 

@@ -4,7 +4,7 @@
 <p align="center">一座島，掌握桌面。<br>AI 對話、個人記憶、音樂、通知與 CPU／GPU／RAM／VRAM。</p>
 
 <p align="center">
-  <a href="https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest"><img src="https://img.shields.io/badge/下載_Windows_安裝版-v0.28.14-E6E744?style=for-the-badge&amp;labelColor=202729" alt="下載 v0.28.14 Windows 安裝版"></a>
+  <a href="https://github.com/OverGreen996/Endfield-Dynamic-Island/releases/latest"><img src="https://img.shields.io/badge/下載_Windows_安裝版-v0.28.15-E6E744?style=for-the-badge&amp;labelColor=202729" alt="下載 v0.28.15 Windows 安裝版"></a>
 </p>
 <p align="center">
   <a href="docs/INSTALL.zh-TW.md">安裝教學</a> · <a href="docs/USAGE.zh-TW.md">操作說明</a> · <a href="docs/AI-FALLBACK.md">AI 金鑰與備援</a> · <a href="README.en.md">English</a>
@@ -20,7 +20,7 @@
 
 ## 這次是整體重製
 
-**v0.28.14 已發布。** AI 與搜尋直接內建於主程式，從理解問題、個人記憶，到搜尋與答覆，走同一條流程。設定視窗、模型備援、人格切換與膠囊 HUD 都已整合，安裝後填入自己的金鑰即可開始使用。
+**v0.28.15 已發布。** AI 與搜尋直接內建於主程式，從理解問題、個人記憶，到搜尋與答覆，走同一條流程。設定視窗、模型備援、人格切換與膠囊 HUD 都已整合，安裝後填入自己的金鑰即可開始使用。
 
 | 以前 | 現在 |
 | --- | --- |
@@ -41,7 +41,7 @@
 | **AI 助理** · `Alt+A` | 自然問答、背景搜尋、快速逐字顯示；切換人格、接續上下文、Ctrl+V 貼圖。AI 頭像維持青藍圈，使用者頭像可自訂並帶黃色圈。 |
 | **音樂** · `Alt+M` | YouTube 清單或跟隨瀏覽器，封面、進度、上一首／下一首、隨機與重播。 |
 | **通知與提醒** | 通知優先顯示、停留暫停、點擊固定；AI 建立的本機提醒到點顯示，不額外呼叫模型。 |
-| **效能 HUD** | 一列讀完 CPU、GPU、RAM、VRAM，背景預採樣減少喚出等待；缺值顯示 `—`。效能總覽右側圓環顯示 GPU 使用率。 |
+| **效能 HUD** | 一列讀完 CPU、GPU、RAM、VRAM，背景預採樣減少喚出等待；缺值顯示 `—`。效能總覽右側圓環顯示 GPU 使用率；點一下固定，再點收起，動畫期間也可操作。 |
 
 <p align="center">
   <img src="docs/assets/performance-current.png" alt="效能總覽實際介面，CPU、GPU、RAM、VRAM 及 GPU 圓環" width="700"><br><br>
